@@ -10,8 +10,9 @@ public class GameState {
 	GameState() {
 	 
 	}
-	public int dimX = 10;
-	public int dimY = 10;
+	public static int dimX = 4;
+	public static int dimY = 4;
+	
 	
 	
 	//Segments
@@ -20,7 +21,40 @@ public class GameState {
 	
 	//Claimed units
 	public Player[][] claimedUnits = new Player[dimY][dimX];
-	
+
+	public void copyTo(GameState gs) {
+		copyInline(gs.segX, segX);
+		copyInline(gs.segY, segY);
+		copyInline(gs.claimedUnits, claimedUnits);
+		
+	}
+	private static void copyInline(Player[][] b, Player[][] a) {
+		for(int y=0; y<a.length; y++) {
+			for(int x=0; x<a[y].length; x++) {
+              b[y][x] = a[y][x];				
+			}
+		}
+	}
+	public void reset() {
+		
+		for(Player[] row: segX) {
+			for(Player p: row) {
+				p = null;
+			}
+		}
+		for(Player[] row: segY) {
+			for(Player p: row) {
+				p = null;
+			}
+		}
+		
+		for(Player[] row: claimedUnits) {
+			for(Player p: row) {
+				p = null;
+			}
+		}
+		
+	}
 	public boolean isMoveValid(Segment s) {
 	  //Move is valid if it	is not taken already
 	  if(s.isY) {
@@ -83,8 +117,27 @@ public class GameState {
 	   return;
 	}
 	
-	public LinkedList<Segment> openMoves() {
-		return null;
+	
+	public LinkedList<Segment> openSegments() {
+		LinkedList<Segment> ret = new LinkedList<Segment>();
+		
+ 		//check x moves
+		for(int y =0; y < dimY; y++) {
+			for(int x=0; x < dimX-1; x++) {
+				if(segX[y][x] != null)
+					ret.add(new Segment(x,y,false));
+			}
+		}
+		
+ 		//check y moves
+		for(int y =0; y < dimY-1; y++) {
+			for(int x=0; x < dimX; x++) {
+				if(segX[y][x] != null)
+					ret.add(new Segment(x,y,true));
+			}
+		}
+		
+		return ret;
 	}
 	
 	public void startNewGame() {
