@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
+import java.util.LinkedList;
 
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
@@ -137,10 +138,27 @@ public class GameBoardPanel extends JLayeredPane {
 			  s = new Segment(minX, db.y, false);
 			}
 			
+			if(!gameState.isMoveValid(s)) {
+				//not valid
+				System.out.println("Not valid");
+				lastClicked.setSelected(false);
+				lastClicked=db;
+				return;
+			}
+			
+			
+			int b4 = gameState.getClaimedArea(GameState.Player.P1);
 			gameState.doMove(s, GameState.Player.P1);
 			drawingPanel.repaint();
 			lastClicked.setSelected(false);
 		    lastClicked = db;
+		    
+		    //If no area claimed, computer's turn
+		    if(gameState.getClaimedArea(GameState.Player.P1) - b4 == 0) {
+			  AI ai = new AI(gameState);
+			  ai.takeTurn();
+		    }
+			
 			
 		}
 		
@@ -182,6 +200,9 @@ public class GameBoardPanel extends JLayeredPane {
 		}
 		
 		
+
+		
+		
 	}
 	
 	private Color p1seg = new Color(150,0,0);
@@ -211,5 +232,11 @@ public class GameBoardPanel extends JLayeredPane {
 		
 		gameState.claimedUnits[7][7] = GameState.Player.P1;
 		*/
+		//test
+
+		
+		
+
+		
 	}
 }

@@ -1,8 +1,7 @@
 
-import java.awt.Dimension;
 import java.util.LinkedList;
 
-import javax.swing.JPanel;
+
 
 
 public class GameState {
@@ -10,9 +9,37 @@ public class GameState {
 	GameState() {
 	 
 	}
-	public static int dimX = 4;
-	public static int dimY = 4;
+	public static int dimX = 6;
+	public static int dimY = 6;
 	
+	public String toString() {
+		String ret = new String();
+ 		//check x moves
+		for(int y =0; y < dimY; y++) {
+			for(int x=0; x < dimX-1; x++) {
+				if(x < (dimX - 1)){
+				  if(segX[y][x] != null) {
+					 ret += "_";
+				  }
+				  else { 
+					ret += " ";
+				  }
+				}
+				if(y < (dimY - 1)) {
+					  if(segY[y][x] != null) {
+						 ret += "|";
+					  }
+					  else { 
+						ret += " ";
+					  }
+				}
+				
+				
+			}
+			ret+= System.getProperty("line.separator");
+		}
+		return ret;
+	}
 	
 	
 	//Segments
@@ -55,6 +82,8 @@ public class GameState {
 		}
 		
 	}
+
+	
 	public boolean isMoveValid(Segment s) {
 	  //Move is valid if it	is not taken already
 	  if(s.isY) {
@@ -124,7 +153,7 @@ public class GameState {
  		//check x moves
 		for(int y =0; y < dimY; y++) {
 			for(int x=0; x < dimX-1; x++) {
-				if(segX[y][x] != null)
+				if(segX[y][x] == null)
 					ret.add(new Segment(x,y,false));
 			}
 		}
@@ -132,7 +161,7 @@ public class GameState {
  		//check y moves
 		for(int y =0; y < dimY-1; y++) {
 			for(int x=0; x < dimX; x++) {
-				if(segX[y][x] != null)
+				if(segY[y][x] == null)
 					ret.add(new Segment(x,y,true));
 			}
 		}
@@ -149,7 +178,7 @@ public class GameState {
 		 
 	}
 	
-	public enum Player { P1, P2 };
+	public enum Player { P1, P2};
 	
 	
 	public int getClaimedArea(Player a) {

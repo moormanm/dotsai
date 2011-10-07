@@ -7,4 +7,8 @@ public class Segment {
   public Segment(int x, int y, boolean isY) {
 	  this.x = x; this.y = y; this.isY = isY;
   }
+  
+  public String toString() {
+	  return x + " ," + y + ", " + isY;
+  }
 }
