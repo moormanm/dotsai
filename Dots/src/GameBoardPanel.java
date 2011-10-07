@@ -116,7 +116,6 @@ public class GameBoardPanel extends JLayeredPane {
 			
 			if((xDist > 1 || yDist > 1) || (xDist == 1 && yDist == 1)) {
 				//not valid
-				System.out.println("Not valid");
 				lastClicked.setSelected(false);
 				lastClicked=db;
 				return;
@@ -126,8 +125,6 @@ public class GameBoardPanel extends JLayeredPane {
 			Segment s;
 			
 			
-			System.out.println("Last clicked: " + lastClicked.x + ", " + lastClicked.y);
-			System.out.println("current: " + db.x + ", " + db.y);
 			
 			if(yDist == 1) {
 			  int minY = Math.min(db.y, lastClicked.y);

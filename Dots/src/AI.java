@@ -17,19 +17,14 @@ public class AI {
 	void takeTurn() {
 		Turn t1 = new Turn(this, GameState.Player.P2, null);
 		LinkedList<Turn> list = t1.possibleTurns(GameState.Player.P2);
-		float max = -9999999;
+		int max = Integer.MIN_VALUE;
 		Turn bestTurn = null;
 		if(list.size() == 0) {
 			System.out.println("No moves!");
 			return;
 		}
 		for(Turn t : list) {
-		   
-		
-		   
-		   float tmp =  -1 * minimax(t, GameState.Player.P1, 0);
-		   System.out.println("Turn " + t.toString() + "  : " + tmp);
-		    
+		   int tmp =  -1 * minimax(t, GameState.Player.P1, 1);
 		   if(tmp > max) {
 			   bestTurn = t;
 			   max = tmp; 
@@ -37,18 +32,14 @@ public class AI {
 		}
 	    
 		for(Segment s : bestTurn.moves) {
-			System.out.println("Doing move: " + s);
 			gs.doMove(s, GameState.Player.P2);
 		}
 	}
 	
-	GameState.Player otherPlayer(GameState.Player p) {
-		if(p == GameState.Player.P1) return GameState.Player.P2;
-		return GameState.Player.P1;
-	}
 
-	int maxDepth = 4;
-	float minimax(Turn t, GameState.Player p, int depth) {
+
+	int maxDepth = 3;
+	int minimax(Turn t, GameState.Player p, int depth) {
 		if(depth >= maxDepth) {
 			return t.eval(p);
 		}
@@ -58,15 +49,11 @@ public class AI {
 		if(children.size() == 0) { 
 			return t.eval(p);
 		}
-		float maxVal = -999999;
-		float tmp = 0;
-		Turn bestTurn = null;
-		
-		int i = 0;
+		int maxVal = Integer.MIN_VALUE;
+		int tmp = 0;
 		for(Turn child : children) {
-			tmp = -1 * minimax(child, otherPlayer(p), ++depth);
+			tmp = -1 * minimax(child, GameState.otherPlayer(p), ++depth);
 			if(tmp > maxVal) {
-				bestTurn = child;
 				maxVal = tmp;
 			}
 		}

@@ -8,6 +8,7 @@ class Turn {
 	/**
 	 * 
 	 */
+
 	private final AI ai;
 	public String toString() {
 		String ret = new String();
@@ -33,18 +34,22 @@ class Turn {
 	}
 	GameState.Player p;
 	final GameState evalPad = new GameState();
-	float eval(GameState.Player p) {
-		int units = this.ai.gs.getClaimedArea(p);
+	int eval(GameState.Player p) {
+		int myUnits = this.ai.gs.getClaimedArea(p);
+		int theirUnits = this.ai.gs.getClaimedArea(GameState.otherPlayer(p));
 		this.ai.gs.copyTo(evalPad);
 		applyTurnsToGameState(evalPad, this);
 		
-		units = evalPad.getClaimedArea(p) - units;
+		myUnits = evalPad.getClaimedArea(p) - myUnits;
+		theirUnits = evalPad.getClaimedArea(GameState.otherPlayer(p)) - theirUnits;
+
+		//System.out.println(evalPad.toString());
 		
 		Segment s = moves.getLast();
 		
 		//TODO: Evaluate the last move.
-		
-		return units;
+		System.out.println((myUnits - theirUnits) * 4);
+		return (myUnits - theirUnits) * 4;
 		
 	}
 	
@@ -67,7 +72,6 @@ class Turn {
 	    		 state.doMove(s, t.p);
 	    	 }
 	    }
-	    System.out.println(state.toString());
 	}
 	
 	
@@ -122,12 +126,11 @@ class Turn {
 			Turn turn = Q.poll();
 			
 			//init the tertiary scratch pad
-			this.ai.scratchPad.copyTo(this.ai.scratchPad2);
+			this.ai.gs.copyTo(this.ai.scratchPad2);
 			
 			//Apply the parent turns to the game state
 			applyTurnsToGameState(this.ai.scratchPad2, turn);
 			
-			System.out.println(this.ai.scratchPad2.toString());
 			
 			//Get open segs for this state
 			openSegs = this.ai.scratchPad2.openSegments();

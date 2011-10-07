@@ -16,27 +16,45 @@ public class GameState {
 		String ret = new String();
  		//check x moves
 		for(int y =0; y < dimY; y++) {
-			for(int x=0; x < dimX-1; x++) {
+			for(int x=0; x < dimX; x++) {
 				if(y < (dimY - 1)) {
 					  if(segY[y][x] != null) {
-						 ret += "|";
+						 ret += "| ";
 					  }
 					  else { 
-						ret += " ";
+						ret += "  ";
 					  }
 				}
 				
 				if(x < (dimX - 1)){
 				  if(segX[y][x] != null) {
-					 ret += "_";
+					 ret += "_ ";
 				  }
 				  else { 
-					ret += " ";
+					ret += "  ";
 				  }
 				}
 
 				
 				
+			}
+			ret+= System.getProperty("line.separator");
+			
+		}
+		ret+= System.getProperty("line.separator");
+		
+		for(int i =0; i < dimY-1; i++) {
+			for(int j=0; j <dimX-1; j++) {
+				if(claimedUnits[i][j] == Player.P1) {
+					ret+= "X ";
+				}
+				else if(claimedUnits[i][j] == Player.P2) {
+					ret+="O ";
+				}
+				else {
+					ret+="  ";
+				}
+			
 			}
 			ret+= System.getProperty("line.separator");
 		}
@@ -148,6 +166,10 @@ public class GameState {
 	   return;
 	}
 	
+	public static GameState.Player otherPlayer(GameState.Player p) {
+		if(p == GameState.Player.P1) return GameState.Player.P2;
+		return GameState.Player.P1;
+	}
 	
 	public LinkedList<Segment> openSegments() {
 		LinkedList<Segment> ret = new LinkedList<Segment>();
