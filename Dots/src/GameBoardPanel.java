@@ -157,6 +157,7 @@ public class GameBoardPanel extends JLayeredPane {
 		    if(gameState.getClaimedArea(GameState.Player.P1) - b4 == 0) {
 			  AI ai = new AI(gameState);
 			  ai.takeTurn();
+			  drawingPanel.repaint();
 		    }
 			
 			

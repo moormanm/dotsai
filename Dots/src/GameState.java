@@ -17,14 +17,6 @@ public class GameState {
  		//check x moves
 		for(int y =0; y < dimY; y++) {
 			for(int x=0; x < dimX-1; x++) {
-				if(x < (dimX - 1)){
-				  if(segX[y][x] != null) {
-					 ret += "_";
-				  }
-				  else { 
-					ret += " ";
-				  }
-				}
 				if(y < (dimY - 1)) {
 					  if(segY[y][x] != null) {
 						 ret += "|";
@@ -33,6 +25,16 @@ public class GameState {
 						ret += " ";
 					  }
 				}
+				
+				if(x < (dimX - 1)){
+				  if(segX[y][x] != null) {
+					 ret += "_";
+				  }
+				  else { 
+					ret += " ";
+				  }
+				}
+
 				
 				
 			}
