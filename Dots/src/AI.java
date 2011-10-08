@@ -8,6 +8,7 @@ import java.util.LinkedList;
 public class AI {
 
 
+	public static int maxDepth = 7;
 	AI(GameState gs) {
 		this.gs = gs;
 	}
@@ -15,25 +16,12 @@ public class AI {
 	
 	GameState scratchPad = new GameState();
 	GameState scratchPad2 = new GameState();
-	
 
-	//Sorting class that implements the heuristic function
-	class HeuristicSort implements Comparator<Turn> {
-		@Override
-		public int compare(Turn a, Turn b) {
-			Integer aval =  a.eval(a.p);
-			Integer bval =  b.eval(b.p);
-			return aval.compareTo(bval);
-		}
-	} 
-	
-	HeuristicSort cmp = new HeuristicSort();
 	
 	void takeTurn() {
 		Turn t1 = new Turn(this, GameState.Player.P2, null);
 		LinkedList<Turn> list = t1.possibleTurns(GameState.Player.P2);
-		//Sort by the heuristic
-		Collections.sort(list,cmp);
+
 		int max = Integer.MIN_VALUE;
 		Turn bestTurn = null;
 		if(list.size() == 0) {
@@ -41,8 +29,8 @@ public class AI {
 			return;
 		}
 		for(Turn t : list) {
-		   int tmp =  -alphabeta(t, GameState.Player.P1, 5, Integer.MIN_VALUE, Integer.MAX_VALUE);
-			// int tmp =  -minimax(t, GameState.Player.P1, 5);
+		   //int tmp =  -alphabeta(t, GameState.Player.P1, maxDepth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+		   int tmp =  -minimax(t, GameState.Player.P1, 5);
 		   if(tmp > max) {
 			   bestTurn = t;
 			   max = tmp; 
@@ -52,6 +40,7 @@ public class AI {
 		for(Segment s : bestTurn.moves) {
 			gs.doMove(s, GameState.Player.P2);
 		}
+		System.out.println("max depth is: " + maxDepth);
 	}
 	
 

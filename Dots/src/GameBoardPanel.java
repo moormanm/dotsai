@@ -2,12 +2,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
 import java.util.LinkedList;
 
+import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -16,7 +18,9 @@ import javax.swing.event.ChangeListener;
 
 
 public class GameBoardPanel extends JLayeredPane {
-	
+
+	public JLabel p1Score = new JLabel();
+	public JLabel p2Score = new JLabel();
 	final DrawingPanel drawingPanel = new DrawingPanel();
 	private class DrawingPanel extends JPanel{
 		public static final int margin = 20;
@@ -44,7 +48,7 @@ public class GameBoardPanel extends JLayeredPane {
 			    			else {
 			    				g.setColor(p2seg);
 			    			}
-			    			rect.setRect(m+x*u, m+y*u, u, lw);
+			    			rect.setRect(m+x*u, m+y*u - (int)Math.round(lw / 2.0), u, lw);
 			    			g.fill(rect);
 			    		}
 			    	}
@@ -60,7 +64,7 @@ public class GameBoardPanel extends JLayeredPane {
 			    			else {
 			    				g.setColor(p2seg);
 			    			}
-			    			rect.setRect(m+x*u, m+y*u, lw, u);
+			    			rect.setRect(m+x*u - (int)Math.round(lw / 2.0), m+y*u, lw, u);
 			    			g.fill(rect);
 			    		}
 			    	}
@@ -74,16 +78,32 @@ public class GameBoardPanel extends JLayeredPane {
 			    			continue;
 			    		}
 			    		else if(p == GameState.Player.P1) {
-			    			g.setColor(Color.RED);
+			    			g.setColor(p1area);
 			    		}
 			    		else if(p == GameState.Player.P2) {
-			    			g.setColor(Color.BLUE);
+			    			g.setColor(p2area);
 			    		}
 			    		
 			    		//Draw the box
-			    		rect.setRect(m+x*u+lw,m+y*u+lw, u-lw, u-lw);
+			    		rect.setRect(m+x*u+ Math.round(lw/2), m+y*u+ Math.round(lw/2), u-lw, u-lw);
 			    		g.fill(rect);
 			    	}
+			    }
+			    
+			    //Draw the lastMove
+			    if(gameState.lastMove != null) {
+			       int x = gameState.lastMove.x;
+			       int y = gameState.lastMove.y;
+			       
+			       if(gameState.lastMove.isY) {
+			    	   g.setColor( gameState.segY[y][x] == GameState.Player.P1 ? p1seg : p2seg);
+			    	   rect.setRect(m+x*u  - (int)Math.round(lw*3 / 2.0), m+y*u, lw*3, u);
+			       }
+			       else {
+			    	   g.setColor( gameState.segX[y][x] == GameState.Player.P1 ? p1seg : p2seg);
+			    	   rect.setRect(m+x*u, m+y*u  - (int)Math.round(lw*3 / 2.0), u, lw*3);
+			       }
+			       g.fill(rect);
 			    }
 			    
 			  }
@@ -91,7 +111,7 @@ public class GameBoardPanel extends JLayeredPane {
 	
 	class BoardButtonListener implements ActionListener {
 
-		DotsButton lastClicked;
+		public DotsButton lastClicked;
 		
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -156,8 +176,10 @@ public class GameBoardPanel extends JLayeredPane {
 			  ai.takeTurn();
 			  drawingPanel.repaint();
 		    }
-			
-			
+		    
+		    //Update score
+		    p1Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P1)));
+		    p2Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P2)));
 		}
 		
 	}
@@ -167,6 +189,7 @@ public class GameBoardPanel extends JLayeredPane {
 		public int y;
 		
 	}
+	BoardButtonListener boardButtonListener = new BoardButtonListener();
 	public int unitSize = 50;
 	GameState gameState;
 	JRadioButton buttons[][];
@@ -177,7 +200,7 @@ public class GameBoardPanel extends JLayeredPane {
 		
 		add(drawingPanel, JLayeredPane.DEFAULT_LAYER);
 		
-		BoardButtonListener boardButtonListener = new BoardButtonListener();
+		
 		
 		buttons = new DotsButton[gs.dimY][gs.dimX];
 		
@@ -197,14 +220,26 @@ public class GameBoardPanel extends JLayeredPane {
 			}
 		}
 		
-		
+		JPanel scorePanel = new JPanel(new GridLayout(2,2, 15, 15));
+		Utilities.standardBorder(scorePanel, "Score");
+		scorePanel.setSize(100,100);
+		scorePanel.setLocation(new Point(DrawingPanel.margin + gs.dimX*unitSize,  DrawingPanel.margin + unitSize));
+		JLabel s1 = Utilities.standardLabel("Red :");
+		JLabel s2 = Utilities.standardLabel("Blue :");
+		scorePanel.add(s1);
+		scorePanel.add(p1Score);
+		scorePanel.add(s2);
+		scorePanel.add(p2Score);
+		add(scorePanel, JLayeredPane.POPUP_LAYER);
 
 		
 		
 	}
 	
-	private Color p1seg = new Color(150,0,0);
-	private Color p2seg = new Color(0,0,150);
+	private Color p1seg = new Color(255,0,0);
+	private Color p1area = new Color(255,127,80);
+	private Color p2seg = new Color(0,0,255);
+	private Color p2area = new Color(80,127,255);
 	private static Rectangle2D.Double rect = new Rectangle2D.Double();
 	 
 	
@@ -212,26 +247,19 @@ public class GameBoardPanel extends JLayeredPane {
 		  if(Math.random() > .5) return GameState.Player.P1;
 		  return GameState.Player.P2;
 	  }
-	public void startNewGame() {
-		/*
-		for(int i=0; i< gameState.dimY; i++) {
-			for(int j=0; j< gameState.dimX; j++) {
-				
-				if(i != gameState.dimY-1) {
-					gameState.doMove(new Segment(j,i,true), randomPlayer());	
-				}
-				if(j != gameState.dimX-1) {
-					gameState.doMove(new Segment(j,i,false), randomPlayer());	
-				}
-				
-				
-			}
-		}
-		
-		gameState.claimedUnits[7][7] = GameState.Player.P1;
-		*/
-		//test
+	public void startNewGame(int difficulty) {
 
+		p1Score.setText("0");
+		p2Score.setText("0");
+		gameState.reset();
+		AI.maxDepth = difficulty;
+		
+		if(boardButtonListener.lastClicked != null) {
+			boardButtonListener.lastClicked.setSelected(false);
+			boardButtonListener.lastClicked = null;
+		}
+			
+		drawingPanel.repaint();
 		
 		
 

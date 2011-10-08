@@ -9,8 +9,10 @@ public class GameState {
 	GameState() {
 	 
 	}
-	public static int dimX = 9;
-	public static int dimY = 9;
+	public Segment lastMove;
+	
+	public static int dimX = 8;
+	public static int dimY = 8;
 	
 	public String toString() {
 		String ret = new String();
@@ -62,7 +64,7 @@ public class GameState {
 	}
 	
 	
-	//Segments
+	//Segments 
 	public Player[][] segX = new Player[dimY][dimX-1];
     public Player[][] segY = new Player[dimY-1][dimX];
 	
@@ -84,22 +86,24 @@ public class GameState {
 	}
 	public void reset() {
 		
-		for(Player[] row: segX) {
-			for(Player p: row) {
-				p = null;
+		for(int y =0; y < dimY; y++) {
+			for(int x=0; x < dimX-1; x++) {
+				segX[y][x] = null;
 			}
 		}
-		for(Player[] row: segY) {
-			for(Player p: row) {
-				p = null;
+		for(int y =0; y < dimY-1; y++) {
+			for(int x=0; x < dimX; x++) {
+			   segY[y][x] = null;
+			}
+		}
+		for(int i =0; i < dimY-1; i++) {
+			for(int j=0; j <dimX-1; j++) {
+				claimedUnits[i][j] = null;
 			}
 		}
 		
-		for(Player[] row: claimedUnits) {
-			for(Player p: row) {
-				p = null;
-			}
-		}
+		
+		lastMove = null;
 		
 	}
 
@@ -124,6 +128,7 @@ public class GameState {
 	
 	
 	public void doMove(Segment s, Player p) {
+	   lastMove = s;
 	   Player seg[][];
 	   if(s.isY) {
 		   seg = segY;
@@ -131,6 +136,7 @@ public class GameState {
 	   else {
 		   seg = segX;
 	   }
+	   
 	   
 	   //apply the segment
 	   seg[s.y][s.x] = p;
@@ -203,6 +209,7 @@ public class GameState {
 	}
 	
 	public enum Player { P1, P2};
+	
 	
 	
 	public int getClaimedArea(Player a) {
