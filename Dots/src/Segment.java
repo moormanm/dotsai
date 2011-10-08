@@ -11,4 +11,8 @@ public class Segment {
   public String toString() {
 	  return x + " ," + y + ", " + isY;
   }
+  
+  public String encode() {
+	  return x + "," + y + "," + (isY ? "1" : "0");
+  }
 }

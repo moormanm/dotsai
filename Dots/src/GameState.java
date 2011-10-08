@@ -9,8 +9,8 @@ public class GameState {
 	GameState() {
 	 
 	}
-	public static int dimX = 6;
-	public static int dimY = 6;
+	public static int dimX = 9;
+	public static int dimY = 9;
 	
 	public String toString() {
 		String ret = new String();

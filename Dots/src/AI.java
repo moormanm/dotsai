@@ -1,3 +1,5 @@
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 
 
@@ -14,9 +16,24 @@ public class AI {
 	GameState scratchPad = new GameState();
 	GameState scratchPad2 = new GameState();
 	
+
+	//Sorting class that implements the heuristic function
+	class HeuristicSort implements Comparator<Turn> {
+		@Override
+		public int compare(Turn a, Turn b) {
+			Integer aval =  a.eval(a.p);
+			Integer bval =  b.eval(b.p);
+			return aval.compareTo(bval);
+		}
+	} 
+	
+	HeuristicSort cmp = new HeuristicSort();
+	
 	void takeTurn() {
 		Turn t1 = new Turn(this, GameState.Player.P2, null);
 		LinkedList<Turn> list = t1.possibleTurns(GameState.Player.P2);
+		//Sort by the heuristic
+		Collections.sort(list,cmp);
 		int max = Integer.MIN_VALUE;
 		Turn bestTurn = null;
 		if(list.size() == 0) {
@@ -24,7 +41,8 @@ public class AI {
 			return;
 		}
 		for(Turn t : list) {
-		   int tmp =  -1 * minimax(t, GameState.Player.P1, 1);
+		   int tmp =  -alphabeta(t, GameState.Player.P1, 5, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			// int tmp =  -minimax(t, GameState.Player.P1, 5);
 		   if(tmp > max) {
 			   bestTurn = t;
 			   max = tmp; 
@@ -38,9 +56,34 @@ public class AI {
 	
 
 
-	int maxDepth = 3;
+	int alphabeta(Turn t, GameState.Player p, int depth, int alpha, int beta) {
+		if(depth <= 0) {
+			return t.eval(p);
+		}
+		
+
+		LinkedList<Turn> children = t.possibleTurns(p);
+		if(children.size() == 0) { 
+			return t.eval(p);
+		}
+		
+		int tmp = 0;
+		outer:
+		for(Turn child : children) {
+			tmp = -alphabeta(child, GameState.otherPlayer(p), --depth, -beta, -alpha );
+			alpha = Math.max(alpha, tmp);
+            if(alpha >= beta) {
+            	System.out.println("Pruning branch");
+            	//Prune branch
+            	break outer;
+            }
+		}
+		return alpha;
+	}
+	
+	
 	int minimax(Turn t, GameState.Player p, int depth) {
-		if(depth >= maxDepth) {
+		if(depth <= 0) {
 			return t.eval(p);
 		}
 		
@@ -52,10 +95,14 @@ public class AI {
 		int maxVal = Integer.MIN_VALUE;
 		int tmp = 0;
 		for(Turn child : children) {
-			tmp = -1 * minimax(child, GameState.otherPlayer(p), ++depth);
+			tmp = -1 * minimax(child, GameState.otherPlayer(p), --depth);
 			if(tmp > maxVal) {
 				maxVal = tmp;
 			}
+			
+			
+			
+			
 		}
 		return maxVal;
 	}

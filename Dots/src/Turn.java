@@ -1,3 +1,6 @@
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 
@@ -20,7 +23,7 @@ class Turn {
 			parents.addFirst(par);
 			par = par.parent;
 		}
-		
+
 		parents.addLast(this);
 		for(Turn t : parents) {
 			for(Segment s: t.moves) {
@@ -33,7 +36,7 @@ class Turn {
 		return ret;
 	}
 	GameState.Player p;
-	final GameState evalPad = new GameState();
+	static final GameState evalPad = new GameState();
 	int eval(GameState.Player p) {
 		int myUnits = this.ai.gs.getClaimedArea(p);
 		int theirUnits = this.ai.gs.getClaimedArea(GameState.otherPlayer(p));
@@ -48,7 +51,7 @@ class Turn {
 		Segment s = moves.getLast();
 		
 		//TODO: Evaluate the last move.
-		System.out.println((myUnits - theirUnits) * 4);
+		//System.out.println((myUnits - theirUnits) * 4);
 		return (myUnits - theirUnits) * 4;
 		
 	}
@@ -77,7 +80,9 @@ class Turn {
 	
 	Turn parent;
 	LinkedList<Segment> moves = new LinkedList<Segment>();
-	
+	private Turn() {
+		ai = null;
+	}
 	public Turn(AI ai, GameState.Player p, Turn parent) {
 		this.ai = ai;
 		this.p = p;
@@ -91,6 +96,7 @@ class Turn {
 		}
 	}
 
+	final static GameState tmpState = new GameState();
 	LinkedList<Turn> possibleTurns(GameState.Player p) {
 		
 		LinkedList<Turn> ret = new LinkedList<Turn>();
@@ -107,7 +113,6 @@ class Turn {
 		//Get open segments for this state
 		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments(); 
 		
-		LinkedList<Turn> Q = new LinkedList<Turn>();
 		
 		for(Segment s: openSegs) {
 			//Create a new turn
@@ -115,71 +120,85 @@ class Turn {
 			subTurn.moves.add(s);
 			
 			if(this.ai.segmentWouldClaimUnit(this.ai.scratchPad, s)) {
-				Q.add(subTurn);
+				//init a temporary state
+				ai.scratchPad.copyTo(tmpState);
+				
+				//do the first move
+				tmpState.doMove(s,p);
+				
+				boolean keepGoing = true;
+				while(keepGoing) {
+					keepGoing = false;
+					//Keep doing chain moves
+					LinkedList<Segment> segs = tmpState.openSegments();
+					for(Segment s2: segs) {
+		              if(ai.segmentWouldClaimUnit(tmpState, s2)) {
+		            	  keepGoing=true;
+		            	  tmpState.doMove(s2, p);
+		            	  subTurn.moves.add(s2);
+		              }
+					}
+				}
+				
+				//Add new turns for the last move
+				LinkedList<Segment> segs = tmpState.openSegments();
+				//No more moves case
+				if(segs.size() == 0) {
+					ret.add(subTurn);
+				}
+				
+				for(Segment lastMove : segs) {
+					//Create a new move
+					Turn nt = new Turn(ai, p, this);
+					
+					//Take a copy of the moves from subTurn
+					subTurn.copyMovesTo(nt);
+					
+					//Add the last move
+					nt.moves.add(lastMove);
+					
+					ret.add(nt);
+					
+					
+				}
+        		
+        		
 			}
 			else {
 				ret.add(subTurn);
 			}
 		}
 		
-		while(Q.size() > 0) {
-			Turn turn = Q.poll();
-			
-			//init the tertiary scratch pad
-			this.ai.gs.copyTo(this.ai.scratchPad2);
-			
-			//Apply the parent turns to the game state
-			applyTurnsToGameState(this.ai.scratchPad2, turn);
-			
-			
-			//Get open segs for this state
-			openSegs = this.ai.scratchPad2.openSegments();
-			
-			if(openSegs.size() == 0) {
-				ret.add(turn);
-			}
-			for(Segment s: openSegs) {
-				//Create a new turn, copy move list
-				Turn subTurn = new Turn(this.ai, p, turn.parent);
-				turn.copyMovesTo(subTurn);
-				subTurn.moves.addLast(s);
-				
-				if(this.ai.segmentWouldClaimUnit(this.ai.scratchPad2, s)) {
-					Q.add(subTurn);
-				}
-				else {
-					ret.add(subTurn);
-				}
-			}
-		}
-			
-			
-		//For each segment:
-		   //If this segment would result in a score move:
-		     //Create a new turn with this segment as the first move and Push it on the Q
-	       //Else:
-		     //Create a new turn with this segment as the first move and add to the ret list
-		
-		
-		//While Q > 0:
-		   //Pop Q -> turn
-		   //Get the open segments for this state
-		   //For each segment:
-		     //Create subturn from turn
-		     //Add this segment to subturn.moves
-		     //If this segment would result in a score move:
-		       //push subturn onto the Q
-		     //Else:
-		       //add subturn to ret list 
-		  
-        
-	   
-		
-		//
-		
-		
-		
 		return ret;
 		
+	}
+	
+	//Reliably sorts segment lists
+	class SegmentSort implements Comparator<Segment> {
+		@Override
+		public int compare(Segment a, Segment b) {
+			String aStr = a.encode();
+			String bStr = b.encode();
+			return aStr.compareTo(bStr);
+		}
+	} 
+	
+	static final Turn instance = new Turn();
+	static final SegmentSort segCmp = instance.new SegmentSort();
+	static final LinkedList<Segment> tmpMoveList = new LinkedList<Segment>(); 
+	public String encode() {
+		String ret = new String();
+		//Make a copy of the move list
+		tmpMoveList.clear();
+		for(Segment s: moves) {
+			tmpMoveList.add(s);
+		}
+		Collections.sort(tmpMoveList, segCmp);
+		
+		for(Segment s: tmpMoveList) {
+			ret += s.encode();
+		}
+		
+		return ret;
 	}
 }
