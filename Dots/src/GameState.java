@@ -11,8 +11,8 @@ public class GameState {
 	}
 	public Segment lastMove;
 	
-	public static int dimX = 7;
-	public static int dimY = 7;
+	public static int dimX = 5;
+	public static int dimY = 5;
 	
 	public String toString() {
 		String ret = new String();
@@ -126,6 +126,28 @@ public class GameState {
 	}
 	
 	
+	public int numSegmentsForPoint(int x, int y) {
+		
+		int ret =0;
+		//Get the x segments that touch this point
+		if(x>0) {
+			ret += segX[y][x-1]  == null ? 0 : 1;
+		}
+		if(x<dimX-1) {
+			ret += segX[y][x]  == null ? 0 : 1;
+		}
+		
+		
+		//Get the y segments that touch this point
+		if(y > 0) {
+			ret += segY[y-1][x]  == null ? 0 : 1;
+		}
+		if(y < (dimY - 2)) {
+			ret += segY[y][x]  == null ? 0 : 1;
+		}
+		
+		return ret;
+	}
 	
 	public void doMove(Segment s, Player p) {
 	   

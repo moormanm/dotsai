@@ -180,6 +180,8 @@ public class GameBoardPanel extends JLayeredPane {
 		    //Update score
 		    p1Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P1)));
 		    p2Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P2)));
+		    
+		    System.out.println("Touching segments for 0,0 is : " + gameState.numSegmentsForPoint(0, 0));
 		}
 		
 	}
@@ -211,8 +213,8 @@ public class GameBoardPanel extends JLayeredPane {
 				DotsButton j = new DotsButton(); 
 				buttons[y][x] = j;
 				j.x = x; j.y = y;
-				j.setLocation(new Point(DrawingPanel.margin + x*unitSize - (int) Math.round((j.getPreferredSize().width / 2.25)),
-						                DrawingPanel.margin + y*unitSize - (int) Math.round((j.getPreferredSize().height / 2.25))));
+				j.setLocation(new Point(DrawingPanel.margin + x*unitSize - (int) Math.round((j.getPreferredSize().width / 2.0)),
+						                DrawingPanel.margin + y*unitSize - (int) Math.round((j.getPreferredSize().height / 2.0))));
 				j.setSize(j.getPreferredSize());
 				j.setOpaque(false);
 				j.addActionListener(boardButtonListener);

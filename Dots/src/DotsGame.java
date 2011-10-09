@@ -30,7 +30,7 @@ public class DotsGame extends JFrame{
 	final GameState gameState = new GameState();
 	final GameBoardPanel gameBoardPanel = new GameBoardPanel(gameState);
 	
-	void difficultyHandler(String name, final int level, final JMenu parent) {
+	void makeDifficultyHandler(String name, final int level, final JMenu parent) {
 		JMenuItem menuItem = new JMenuItem(name);
 		menuItem.addActionListener(new ActionListener() {
 			@Override
@@ -46,14 +46,13 @@ public class DotsGame extends JFrame{
 		JMenuBar menuBar = new JMenuBar();
 		JMenu newGameMenu = new JMenu("New Game");
 		
-
-		difficultyHandler("Tourist", 1, newGameMenu);
-		difficultyHandler("Easy", 2, newGameMenu);
-		difficultyHandler("Medium", 3, newGameMenu);
-		difficultyHandler("Hard", 4, newGameMenu);
-		difficultyHandler("Serious", 5, newGameMenu);
-		difficultyHandler("Mental", 6, newGameMenu);
-		difficultyHandler("Jedi Master", 8, newGameMenu);
+		makeDifficultyHandler("Tourist", 1, newGameMenu);
+		makeDifficultyHandler("Easy", 2, newGameMenu);
+		makeDifficultyHandler("Medium", 3, newGameMenu);
+		makeDifficultyHandler("Hard", 4, newGameMenu);
+		makeDifficultyHandler("Serious", 5, newGameMenu);
+		makeDifficultyHandler("Mental", 6, newGameMenu);
+		makeDifficultyHandler("Jedi Master", 8, newGameMenu);
 		
 		menuBar.add(newGameMenu);
 		return menuBar;
@@ -71,7 +70,7 @@ public class DotsGame extends JFrame{
 	public DotsGame() {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		build();
-		gameBoardPanel.startNewGame(7);
+		gameBoardPanel.startNewGame(8);
 
 		setVisible(true);
 		

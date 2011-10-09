@@ -6,6 +6,7 @@ import java.util.LinkedList;
 
 
 
+
 class Turn {
 
 	/**
@@ -46,9 +47,6 @@ class Turn {
 		
 		myUnits = evalPad.getClaimedArea(p) - myUnits;
 		theirUnits = evalPad.getClaimedArea(GameState.otherPlayer(p)) - theirUnits;
-
-		//System.out.println(evalPad.toString());
-		
 		Segment s = moves.getLast();
 		
 		
@@ -59,12 +57,36 @@ class Turn {
 				winBonus = Integer.MAX_VALUE / 2;
 				System.out.println("Win bonus!!");
 			}
+			else {
+				//losing, make it really small
+				winBonus = -1 * Integer.MAX_VALUE / 2;
+				System.out.println("Lose bonus!!");
+			}
 			
 		}
 		
-		//TODO: Evaluate the last move.
-		//System.out.println((myUnits - theirUnits) * 4);
-		return (myUnits - theirUnits) * 4 + winBonus;
+	
+		int cnt = 0;
+		int tmp = 0;
+		if(s.isY) {
+			tmp = evalPad.numSegmentsForPoint(s.x, s.y);
+			if(tmp > 0) cnt += tmp - 1;
+			tmp = evalPad.numSegmentsForPoint(s.x, s.y+1);
+			if(tmp > 0) cnt += tmp - 1;
+		}
+		else {
+			tmp = evalPad.numSegmentsForPoint(s.x, s.y);
+			if(tmp > 0) cnt += tmp - 1;
+			tmp = evalPad.numSegmentsForPoint(s.x+1, s.y);
+			if(tmp > 0) cnt += tmp - 1;
+		}
+		
+
+		assert(cnt <= 6 && cnt >= 0);
+		
+		int retVal =  (myUnits - theirUnits) * 7 + winBonus;
+		//System.out.println("ret is " + retVal + " for segment " + s);
+		return retVal;
 		
 	}
 	

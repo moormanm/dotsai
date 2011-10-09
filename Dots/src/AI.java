@@ -21,7 +21,7 @@ public class AI {
 	void takeTurn() {
 		Turn t1 = new Turn(this, GameState.Player.P2, null);
 		LinkedList<Turn> list = t1.possibleTurns(GameState.Player.P2);
-		Collections.shuffle(list);
+		//Collections.shuffle(list);
 
 		int max = Integer.MIN_VALUE;
 		Turn bestTurn = null;
@@ -30,7 +30,7 @@ public class AI {
 			return;
 		}
 		for(Turn t : list) {
-		   int tmp =  -alphabeta(t, GameState.Player.P1, maxDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
+		   int tmp =  -alphabeta(t, GameState.Player.P1, maxDepth-1, Integer.MIN_VALUE, Integer.MAX_VALUE);
 		   //int tmp =  -minimax(t, GameState.Player.P1, 5);
 		   if(tmp > max) {
 			   bestTurn = t;
