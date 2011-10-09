@@ -43,6 +43,7 @@ class Turn {
 		this.ai.gs.copyTo(evalPad);
 		applyTurnsToGameState(evalPad, this);
 		
+		
 		myUnits = evalPad.getClaimedArea(p) - myUnits;
 		theirUnits = evalPad.getClaimedArea(GameState.otherPlayer(p)) - theirUnits;
 
@@ -50,9 +51,20 @@ class Turn {
 		
 		Segment s = moves.getLast();
 		
+		
+		//If this is the end game state, and this is winning, assing a HUGE value
+		int winBonus = 0;
+		if(evalPad.hasOpenSegments() == false) {
+			if(evalPad.getClaimedArea(p) > evalPad.getClaimedArea(GameState.otherPlayer(p))) {
+				winBonus = Integer.MAX_VALUE / 2;
+				System.out.println("Win bonus!!");
+			}
+			
+		}
+		
 		//TODO: Evaluate the last move.
 		//System.out.println((myUnits - theirUnits) * 4);
-		return (myUnits - theirUnits) * 4;
+		return (myUnits - theirUnits) * 4 + winBonus;
 		
 	}
 	
@@ -113,13 +125,16 @@ class Turn {
 		//Get open segments for this state
 		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments(); 
 		
-		
+
+		//Loop through, add mandatory states
 		for(Segment s: openSegs) {
-			//Create a new turn
-			Turn subTurn = new Turn(this.ai, p, this );
-			subTurn.moves.add(s);
+			
 			
 			if(this.ai.segmentWouldClaimUnit(this.ai.scratchPad, s)) {
+				//Create a new turn
+				Turn subTurn = new Turn(this.ai, p, this );
+				subTurn.moves.add(s);
+				
 				//init a temporary state
 				ai.scratchPad.copyTo(tmpState);
 				
@@ -164,11 +179,20 @@ class Turn {
         		
         		
 			}
-			else {
-				ret.add(subTurn);
-			}
 		}
 		
+		//Pick up basic moves if no jump moves were found
+		//Get open segments for this state
+		if(ret.size() == 0) {
+		  openSegs = this.ai.scratchPad.openSegments(); 
+
+  		  //Loop through, add mandatory states
+		  for(Segment s: openSegs) {
+			  Turn basicTurn = new Turn(ai, p, this);
+			  basicTurn.moves.add(s);
+			  ret.add(basicTurn);
+		  }
+		}
 		return ret;
 		
 	}

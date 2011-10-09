@@ -53,7 +53,7 @@ public class DotsGame extends JFrame{
 		difficultyHandler("Hard", 4, newGameMenu);
 		difficultyHandler("Serious", 5, newGameMenu);
 		difficultyHandler("Mental", 6, newGameMenu);
-		difficultyHandler("Jedi Master", 7, newGameMenu);
+		difficultyHandler("Jedi Master", 8, newGameMenu);
 		
 		menuBar.add(newGameMenu);
 		return menuBar;

@@ -11,8 +11,8 @@ public class GameState {
 	}
 	public Segment lastMove;
 	
-	public static int dimX = 8;
-	public static int dimY = 8;
+	public static int dimX = 7;
+	public static int dimY = 7;
 	
 	public String toString() {
 		String ret = new String();
@@ -128,7 +128,10 @@ public class GameState {
 	
 	
 	public void doMove(Segment s, Player p) {
-	   lastMove = s;
+	   
+	
+	    
+		
 	   Player seg[][];
 	   if(s.isY) {
 		   seg = segY;
@@ -136,7 +139,7 @@ public class GameState {
 	   else {
 		   seg = segX;
 	   }
-	   
+	   assert(seg[s.y][s.x] == null);
 	   
 	   //apply the segment
 	   seg[s.y][s.x] = p;
@@ -169,6 +172,7 @@ public class GameState {
 		   }
 			   
 	   }
+	   lastMove = s;
 	   return;
 	}
 	
@@ -222,6 +226,25 @@ public class GameState {
 			}
 		}
 		return ret;
+	}
+	public boolean hasOpenSegments() {
+ 		//check x moves
+		for(int y =0; y < dimY; y++) {
+			for(int x=0; x < dimX-1; x++) {
+				if(segX[y][x] == null)
+					return true;
+			}
+		}
+		
+ 		//check y moves
+		for(int y =0; y < dimY-1; y++) {
+			for(int x=0; x < dimX; x++) {
+				if(segY[y][x] == null)
+					return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	
