@@ -1,4 +1,5 @@
 
+import java.awt.Point;
 import java.util.LinkedList;
 
 
@@ -11,8 +12,8 @@ public class GameState {
 	}
 	public Segment lastMove;
 	
-	public static int dimX = 8;
-	public static int dimY = 8;
+	public static int dimX = 4;
+	public static int dimY = 4;
 	
 	public String toString() {
 		String ret = new String();
@@ -319,6 +320,62 @@ public class GameState {
 		   
 		   return ret;
 	}
+
+        public static boolean fillFragment(int x, int y, int val, int rep[][], GameState gs ) {
+          //return if this point is already taken on the real state or if it's already 
+          //colored on the representation
+          if(gs.claimedUnits[y][x] != null || rep[y][x] != 0) { 
+            return false;
+          } 
+          
+
+          LinkedList<Point> q = new LinkedList<Point>();
+          
+          //init Q
+          q.add(new Point(x,y));
+          
+          while(q.size() > 0) {
+        	  
+        	  //remove an element
+        	  Point p = q.poll();
+        	  
+        	  if(rep[p.y][p.x] != 0) {
+        		  continue;
+        	  }
+        	  
+              //color this point on the rep
+              rep[p.y][p.x] = val;
+              
+              System.out.println(p.x + ", " + p.y);
+              //Check the right and left side
+              if((p.y < gs.dimY - 1) &&
+            	  p.x < gs.dimX - 2 &&
+                  gs.segY[p.y][p.x+1] == null) {
+            	  q.add(new Point(p.x+1, p.y));
+              }
+              if((p.y < gs.dimY - 1) &&
+            	  p.x > 0 && 
+            	  p.x < (gs.dimX-1) &&
+            	  gs.segY[p.y][p.x] == null) {
+            	  q.add(new Point(p.x-1, p.y));
+              }
+              
+              //Check the top and bottom
+              if((p.x < gs.dimX - 1) &&
+                 (p.y > 0) &&
+            	  gs.segX[p.y][p.x] == null) {
+                  q.add(new Point(p.x, p.y-1));        	  
+              }
+              if((p.x < gs.dimX - 1) &&
+                 (p.y < gs.dimY - 2) &&
+                 	  gs.segX[p.y+1][p.x] == null) {
+                       q.add(new Point(p.x, p.y+1));        	  
+              }
+          
+          }
+          return true;
+        
+        }
 	
 	
 }

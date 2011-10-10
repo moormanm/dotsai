@@ -62,19 +62,39 @@ class Turn {
 		if (evalPad.hasOpenSegments() == false) {
 			if (diff > 0) {
 				winBonus = Integer.MAX_VALUE / 2;
-				System.out.println("Win bonus for player " + p.toString());
+		//		System.out.println("Win bonus for player " + p.toString());
 			} else if (diff == 0) {
-				System.out.println("Draw bonus for player " + p.toString());
+				//System.out.println("Draw bonus for player " + p.toString());
 				winBonus = Integer.MAX_VALUE / 4;
 			} else {
 				winBonus = -1 * Integer.MAX_VALUE / 2;
-				System.out.println("Lose bonus for player " + p.toString());
+				//System.out.println("Lose bonus for player " + p.toString());
 			}
 
 		}
+		
+		
 		//assign an overall objective value for these turns
 		int retVal = (myUnits - theirUnits) + winBonus;
 		
+		int i = 1;
+		int count = 0;
+		int rep[][] = new int[ai.gs.dimX-1][ai.gs.dimY-1];
+		
+		for(int y = 0; y < ai.gs.dimY-1; y++) {
+			for(int x = 0; x < ai.gs.dimX -1; x++) {
+				if(GameState.fillFragment(x,y, i++, rep, evalPad)) {
+					count++;
+				}
+			}
+		}
+		System.out.println("count is " + count);
+		for(int[] row : rep) {
+			for(int val : row) {
+				System.out.print(val + " ");
+			}
+			System.out.println( );
+		}
 		return retVal;
 
 	}

@@ -58,7 +58,7 @@ public class AI {
 		LinkedList<Turn> list = t1.possibleTurnsForPlayer(p);
 		
 		//Shuffle the list of possible turns so it appears that the AI is more human like
-		Collections.shuffle(list);
+		//Collections.shuffle(list);
 
 		int max = Integer.MIN_VALUE;
 		Turn bestTurn = null;
@@ -68,6 +68,7 @@ public class AI {
 		}
 		for(Turn t : list) {
 		   int tmp =  -alphabeta(t, GameState.otherPlayer(p), maxDepth-1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+		   System.out.println("Turn :" + t + " is  : " + tmp);
 		   //Uncomment this line to do minimax instead of alpha beta
 		   //int tmp =  -minimax(t, GameState.Player.P1, maxDepth-1);
 		   if(tmp > max) {
@@ -76,9 +77,11 @@ public class AI {
 		   }
 		}
 	    
+		System.out.println("Best Turn :" + bestTurn + " is  : " + max);
 		for(Segment s : bestTurn.moves) {
 			gs.doMove(s, p);
 		}
+		System.out.println("---------------" + Utilities.newLine);
 	}
 	
 

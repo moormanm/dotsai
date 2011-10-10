@@ -277,7 +277,7 @@ public class GameBoardPanel extends JLayeredPane {
 		
 		JPanel scorePanel = new JPanel(new GridLayout(2,2, 15, 15));
 		Utilities.standardBorder(scorePanel, "Score");
-		scorePanel.setSize(100,100);
+		scorePanel.setSize(120,90);
 		scorePanel.setLocation(new Point(DrawingPanel.margin + GameState.dimX*unitSize,  DrawingPanel.margin + unitSize));
 		JLabel s1 = Utilities.standardLabel("Red :");
 		JLabel s2 = Utilities.standardLabel("Blue :");
