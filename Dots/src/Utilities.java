@@ -1,56 +1,18 @@
 
-import java.awt.AWTException;
-import java.awt.Component;
 
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-
-import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
-import javax.swing.JFileChooser;
+
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.plaf.FontUIResource;
+
 
 public class Utilities {
 
-	public static void copyFile(File sourceFile, File destFile) throws IOException {
-	    if(!destFile.exists()) {
-	        destFile.createNewFile();
-	    }
 
-	    FileChannel source = null;
-	    FileChannel destination = null;
 
-	    
-	    try {
-	        source = new FileInputStream(sourceFile).getChannel();
-	        destination = new FileOutputStream(destFile).getChannel();
-	        destination.transferFrom(source, 0, source.size());
-	    }
-	    finally {
-	        if(source != null) {
-	            source.close();
-	        }
-	        if(destination != null) {
-	            destination.close();
-	        }
-	    }
-	}
 	
 	
 	public static void setSwingFont(javax.swing.plaf.FontUIResource f) {
@@ -75,26 +37,6 @@ public class Utilities {
 				JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	public static String popupAskUser(String question, String[] answers,
-			String title) {
-		int answer = JOptionPane.showOptionDialog(null, question, title, 0,
-				JOptionPane.QUESTION_MESSAGE, null, answers, answers[0]);
-		// Return null if the user closed the dialog box
-		if (answer == JOptionPane.CLOSED_OPTION) {
-			return null;
-		}
-
-		// Return their selection
-		return answers[answer];
-
-	}
-
-	static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-
-	public static String timeStamp() {
-		Calendar cal = Calendar.getInstance();
-		return sdf.format(cal.getTime());
-	}
 
 	public static void standardBorder(JPanel jp, String name) {
 		jp.setBorder(BorderFactory.createTitledBorder(

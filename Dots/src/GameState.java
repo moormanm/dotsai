@@ -11,8 +11,8 @@ public class GameState {
 	}
 	public Segment lastMove;
 	
-	public static int dimX = 5;
-	public static int dimY = 5;
+	public static int dimX = 8;
+	public static int dimY = 8;
 	
 	public String toString() {
 		String ret = new String();
@@ -269,7 +269,56 @@ public class GameState {
 		return false;
 	}
 	
-	
+	//A method that checks if a segment would claim a unit. Does not apply the move to the game state.
+	public static boolean segmentWouldClaimUnit(GameState gst, Segment s) {
+		
+		   GameState.Player seg[][];
+		   if(s.isY) {
+			   seg = gst.segY;
+		   }
+		   else {
+			   seg = gst.segX;
+		   }
+		   
+		   //apply the segment
+		   seg[s.y][s.x] = GameState.Player.P1;
+
+		   boolean ret = false;
+		   
+		   //If it's a Y segment, check the left and right areas for enclosure
+		   if(s.isY){
+			   if(s.x != 0) {
+				   if(gst.isUnitEnclosed(s.x-1, s.y)) {
+					   ret = true;
+				   }
+			   }
+			   if(s.x != GameState.dimX-1) {
+				   if(gst.isUnitEnclosed(s.x, s.y)) {
+					   ret = true;
+				   }
+			   }
+		   }
+		   //If it's an X segment, check the top and bottom
+		   else {
+			   if(s.y != 0) {
+				   if(gst.isUnitEnclosed(s.x, s.y-1) ) {
+					   ret = true;
+				   }
+			   }
+			   
+			   if(s.y != GameState.dimY-1) {
+				   if(gst.isUnitEnclosed(s.x, s.y)) {
+					   ret = true;
+				   }
+			   }
+				   
+		   }
+		   
+		   //Undo the move
+		   seg[s.y][s.x] = null;
+		   
+		   return ret;
+	}
 	
 	
 }

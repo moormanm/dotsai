@@ -7,22 +7,27 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
-import java.util.LinkedList;
 
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 
 public class GameBoardPanel extends JLayeredPane {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public JLabel p1Score = new JLabel();
 	public JLabel p2Score = new JLabel();
 	final DrawingPanel drawingPanel = new DrawingPanel();
 	private class DrawingPanel extends JPanel{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		public static final int margin = 20;
 		public DrawingPanel() {
 			setLayout(null);
@@ -39,8 +44,8 @@ public class GameBoardPanel extends JLayeredPane {
 			    int u = unitSize;
 			    GameState.Player p;
 			    //Draw the X segments
-			    for(int y=0; y < gameState.dimY; y++) {
-			    	for(int x=0; x < gameState.dimX -1; x++) {
+			    for(int y=0; y < GameState.dimY; y++) {
+			    	for(int x=0; x < GameState.dimX -1; x++) {
 			    		if( (p = gameState.segX[y][x]) !=null) {
 			    			if(p == GameState.Player.P1) {
 			    				g.setColor(p1seg);
@@ -55,8 +60,8 @@ public class GameBoardPanel extends JLayeredPane {
 			    }
 			    
 			    //Draw the Y segments
-			    for(int y=0; y < gameState.dimY-1; y++) {
-			    	for(int x=0; x < gameState.dimX; x++) {
+			    for(int y=0; y < GameState.dimY-1; y++) {
+			    	for(int x=0; x < GameState.dimX; x++) {
 			    		if( (p = gameState.segY[y][x]) !=null) {
 			    			if(p == GameState.Player.P1) {
 			    				g.setColor(p1seg);
@@ -71,8 +76,8 @@ public class GameBoardPanel extends JLayeredPane {
 			    }
 			    
 			    //Draw the claimed areas
-			    for(int y=0; y < gameState.dimY; y++) {
-			    	for(int x=0; x < gameState.dimX; x++) {
+			    for(int y=0; y < GameState.dimY; y++) {
+			    	for(int x=0; x < GameState.dimX; x++) {
 			    		p = gameState.claimedUnits[y][x];
 			    		if( p == null) {
 			    			continue;
@@ -157,10 +162,30 @@ public class GameBoardPanel extends JLayeredPane {
 			
 			if(!gameState.isMoveValid(s)) {
 				//not valid
-				System.out.println("Not valid");
 				lastClicked.setSelected(false);
 				lastClicked=db;
+				
 				return;
+			}
+			
+		    //Enforce the restriction that jumps must be made if there are jumps to be had.
+			if(! GameState.segmentWouldClaimUnit(gameState, s)) {
+				boolean canJump = false;
+				for(Segment os : gameState.openSegments()) {
+					if(GameState.segmentWouldClaimUnit(gameState, os)) {
+						canJump = true;
+						break;
+					}
+				}
+				if(canJump) {
+					Utilities.showError("Move not allowed. There is a jump move to be made.");
+					lastClicked.setSelected(false);
+					lastClicked=null;
+					db.setSelected(false);
+					return;
+					
+				}
+				
 			}
 			
 			
@@ -168,12 +193,12 @@ public class GameBoardPanel extends JLayeredPane {
 			gameState.doMove(s, GameState.Player.P1);
 			drawingPanel.repaint();
 			lastClicked.setSelected(false);
-		    lastClicked = db;
-		    
+		    lastClicked = null;
+		    db.setSelected(false);
 		    //If no area claimed, computer's turn
 		    if(gameState.getClaimedArea(GameState.Player.P1) - b4 == 0) {
 			  AI ai = new AI(gameState);
-			  ai.takeTurn();
+			  ai.takeTurn(GameState.Player.P2);
 			  drawingPanel.repaint();
 		    }
 		    
@@ -181,12 +206,33 @@ public class GameBoardPanel extends JLayeredPane {
 		    p1Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P1)));
 		    p2Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P2)));
 		    
-		    System.out.println("Touching segments for 0,0 is : " + gameState.numSegmentsForPoint(0, 0));
+		    //if no more open segments, lock the panel, notify that the game is over
+		    if(gameState.hasOpenSegments() == false ) {
+		    	int p1 = gameState.getClaimedArea(GameState.Player.P1);
+		    	int p2 = gameState.getClaimedArea(GameState.Player.P2);
+		    	String str = "";
+		    	if(p1 > p2) {
+		    	  str = "Red wins!";	
+		    	}
+		    	else if (p1 == p2) {
+		    	  str = "Draw!";
+		    	}
+		    	else {
+		    	  str = "Blue wins!";
+		    	}
+		    	Utilities.showInfo(str, "Game Over");
+		    	
+		    	lockControls(true);
+		    }
 		}
 		
 	}
 	
 	class DotsButton extends JRadioButton {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		public int x;
 		public int y;
 		
@@ -195,6 +241,13 @@ public class GameBoardPanel extends JLayeredPane {
 	public int unitSize = 50;
 	GameState gameState;
 	JRadioButton buttons[][];
+	public void lockControls(boolean val) {
+		for(JRadioButton[] row : buttons) {
+			for(JRadioButton b : row) {
+				b.setEnabled(!val);
+			}
+		}
+	}
 	public GameBoardPanel(GameState gs) {
 		
 		setPreferredSize(new Dimension(600,600));
@@ -204,11 +257,11 @@ public class GameBoardPanel extends JLayeredPane {
 		
 		
 		
-		buttons = new DotsButton[gs.dimY][gs.dimX];
+		buttons = new DotsButton[GameState.dimY][GameState.dimX];
 		
 		//Build the radio button array
-		for(int y=0; y < gameState.dimY; y++) {
-			for(int x=0; x < gameState.dimX; x++) {
+		for(int y=0; y < GameState.dimY; y++) {
+			for(int x=0; x < GameState.dimX; x++) {
 				
 				DotsButton j = new DotsButton(); 
 				buttons[y][x] = j;
@@ -225,7 +278,7 @@ public class GameBoardPanel extends JLayeredPane {
 		JPanel scorePanel = new JPanel(new GridLayout(2,2, 15, 15));
 		Utilities.standardBorder(scorePanel, "Score");
 		scorePanel.setSize(100,100);
-		scorePanel.setLocation(new Point(DrawingPanel.margin + gs.dimX*unitSize,  DrawingPanel.margin + unitSize));
+		scorePanel.setLocation(new Point(DrawingPanel.margin + GameState.dimX*unitSize,  DrawingPanel.margin + unitSize));
 		JLabel s1 = Utilities.standardLabel("Red :");
 		JLabel s2 = Utilities.standardLabel("Blue :");
 		scorePanel.add(s1);
@@ -234,6 +287,7 @@ public class GameBoardPanel extends JLayeredPane {
 		scorePanel.add(p2Score);
 		add(scorePanel, JLayeredPane.POPUP_LAYER);
 
+		lockControls(true);
 		
 		
 	}
@@ -260,7 +314,8 @@ public class GameBoardPanel extends JLayeredPane {
 			boardButtonListener.lastClicked.setSelected(false);
 			boardButtonListener.lastClicked = null;
 		}
-			
+	
+		lockControls(false);
 		drawingPanel.repaint();
 		
 		

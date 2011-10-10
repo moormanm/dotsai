@@ -1,11 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.FileWriter;
-
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -16,6 +12,11 @@ import javax.swing.JPanel;
 
 public class DotsGame extends JFrame{
  
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public static void main(String[] args) {
 		// Schedule a job for the event-dispatching thread:
 		// creating and showing this application's GUI.
@@ -50,9 +51,9 @@ public class DotsGame extends JFrame{
 		makeDifficultyHandler("Easy", 2, newGameMenu);
 		makeDifficultyHandler("Medium", 3, newGameMenu);
 		makeDifficultyHandler("Hard", 4, newGameMenu);
-		makeDifficultyHandler("Serious", 5, newGameMenu);
-		makeDifficultyHandler("Mental", 6, newGameMenu);
-		makeDifficultyHandler("Jedi Master", 8, newGameMenu);
+		makeDifficultyHandler("Serious", 6, newGameMenu);
+		makeDifficultyHandler("Mental", 8, newGameMenu);
+		makeDifficultyHandler("Jedi Master", 10, newGameMenu);
 		
 		menuBar.add(newGameMenu);
 		return menuBar;
@@ -70,8 +71,6 @@ public class DotsGame extends JFrame{
 	public DotsGame() {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		build();
-		gameBoardPanel.startNewGame(8);
-
 		setVisible(true);
 		
 	}

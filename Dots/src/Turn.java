@@ -1,11 +1,4 @@
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
-
-
-
-
 
 class Turn {
 
@@ -14,237 +7,196 @@ class Turn {
 	 */
 
 	private final AI ai;
+
+	boolean isRoot = false;
+	
 	public String toString() {
 		String ret = new String();
 		LinkedList<Turn> parents = new LinkedList<Turn>();
 		Turn par = parent;
-		int tcount =1;
-		while(par != null) {
+		int tcount = 1;
+		while (par != null) {
 			tcount++;
 			parents.addFirst(par);
 			par = par.parent;
 		}
 
 		parents.addLast(this);
-		for(Turn t : parents) {
-			for(Segment s: t.moves) {
+		for (Turn t : parents) {
+			for (Segment s : t.moves) {
 				ret += s.toString() + "; ";
 			}
 		}
-		
+
 		ret += tcount;
-		
+
 		return ret;
 	}
+
 	GameState.Player p;
 	static final GameState evalPad = new GameState();
+
 	int eval(GameState.Player p) {
+		
+		//Get the claimed areas of the current game state
 		int myUnits = this.ai.gs.getClaimedArea(p);
 		int theirUnits = this.ai.gs.getClaimedArea(GameState.otherPlayer(p));
+		
+		//Initialize a scratch pad state
 		this.ai.gs.copyTo(evalPad);
+		
+		//Apply this turn set to the scratch pad
 		applyTurnsToGameState(evalPad, this);
-		
-		
-		myUnits = evalPad.getClaimedArea(p) - myUnits;
-		theirUnits = evalPad.getClaimedArea(GameState.otherPlayer(p)) - theirUnits;
-		Segment s = moves.getLast();
-		
-		
-		//If this is the end game state, and this is winning, assing a HUGE value
-		int winBonus = 0;
-		if(evalPad.hasOpenSegments() == false) {
-			if(evalPad.getClaimedArea(p) > evalPad.getClaimedArea(GameState.otherPlayer(p))) {
-				winBonus = Integer.MAX_VALUE / 2;
-				System.out.println("Win bonus!!");
-			}
-			else {
-				//losing, make it really small
-				winBonus = -1 * Integer.MAX_VALUE / 2;
-				System.out.println("Lose bonus!!");
-			}
-			
-		}
-		
-	
-		int cnt = 0;
-		int tmp = 0;
-		if(s.isY) {
-			tmp = evalPad.numSegmentsForPoint(s.x, s.y);
-			if(tmp > 0) cnt += tmp - 1;
-			tmp = evalPad.numSegmentsForPoint(s.x, s.y+1);
-			if(tmp > 0) cnt += tmp - 1;
-		}
-		else {
-			tmp = evalPad.numSegmentsForPoint(s.x, s.y);
-			if(tmp > 0) cnt += tmp - 1;
-			tmp = evalPad.numSegmentsForPoint(s.x+1, s.y);
-			if(tmp > 0) cnt += tmp - 1;
-		}
-		
 
-		assert(cnt <= 6 && cnt >= 0);
+		//Get the number of claimed areas after the turns have been applied
+		int myUnitsAfter = evalPad.getClaimedArea(p);
+		int theirUnitsAfter = evalPad.getClaimedArea(GameState.otherPlayer(p));
+
+		///Get the deltas
+		myUnits = myUnitsAfter - myUnits;
+		theirUnits = theirUnitsAfter - theirUnits;
+		int diff = myUnitsAfter - theirUnitsAfter;
+
+		// If this is the end game state, assign a HUGE bonus or penalty
+		int winBonus = 0;
+		if (evalPad.hasOpenSegments() == false) {
+			if (diff > 0) {
+				winBonus = Integer.MAX_VALUE / 2;
+				System.out.println("Win bonus for player " + p.toString());
+			} else if (diff == 0) {
+				System.out.println("Draw bonus for player " + p.toString());
+				winBonus = Integer.MAX_VALUE / 4;
+			} else {
+				winBonus = -1 * Integer.MAX_VALUE / 2;
+				System.out.println("Lose bonus for player " + p.toString());
+			}
+
+		}
+		//assign an overall objective value for these turns
+		int retVal = (myUnits - theirUnits) + winBonus;
 		
-		int retVal =  (myUnits - theirUnits) * 7 + winBonus;
-		//System.out.println("ret is " + retVal + " for segment " + s);
 		return retVal;
-		
+
 	}
-	
-	//Applys this turn and parent turns to game state
-	 static void applyTurnsToGameState(GameState state, Turn turns) {
-		if(state == null || turns == null) return;
-		
-		//Reorder the turns
+
+	// Applys this turn and parent turns to game state
+	static void applyTurnsToGameState(GameState state, Turn turns) {
+		if (state == null || turns == null)
+			return;
+
+		// Reorder the turns
 		LinkedList<Turn> turnList = new LinkedList<Turn>();
 		Turn turn = turns.parent;
-	    while(turn != null) {
-	    	turnList.addFirst(turn);
-	    	turn = turn.parent;
-	    }
-	    //Add the last turn
-	    turnList.addLast(turns);
-	    
-	    for(Turn t: turnList) {
-	    	 for(Segment s: t.moves) {
-	    		 state.doMove(s, t.p);
-	    	 }
-	    }
+		while (turn != null) {
+			turnList.addFirst(turn);
+			turn = turn.parent;
+		}
+		// Add the last turn
+		turnList.addLast(turns);
+
+		for (Turn t : turnList) {
+			for (Segment s : t.moves) {
+				state.doMove(s, t.p);
+			}
+		}
 	}
-	
-	
+
 	Turn parent;
 	LinkedList<Segment> moves = new LinkedList<Segment>();
-	private Turn() {
-		ai = null;
-	}
+
 	public Turn(AI ai, GameState.Player p, Turn parent) {
 		this.ai = ai;
 		this.p = p;
 		this.parent = parent;
 	}
-	
+
 	void copyMovesTo(Turn subTurn) {
 		subTurn.moves.clear();
-		for(Segment s: moves) {
+		for (Segment s : moves) {
 			subTurn.moves.add(s);
 		}
 	}
 
 	final static GameState tmpState = new GameState();
-	LinkedList<Turn> possibleTurns(GameState.Player p) {
-		
+
+	LinkedList<Turn> possibleTurnsForPlayer(GameState.Player p) {
+
 		LinkedList<Turn> ret = new LinkedList<Turn>();
-		
-		//Init the scratch pad
+
+		// Init the scratch pad
 		this.ai.gs.copyTo(this.ai.scratchPad);
-		
-		
-	    //Apply parent turns to get to the current state
+
+		// Apply parent turns to get to the current state
 		applyTurnsToGameState(this.ai.scratchPad, this);
-		
-		
 
-		//Get open segments for this state
-		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments(); 
-		
+		// Get open segments for this state
+		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments();
 
-		//Loop through, add mandatory states
-		for(Segment s: openSegs) {
-			
-			
-			if(this.ai.segmentWouldClaimUnit(this.ai.scratchPad, s)) {
-				//Create a new turn
-				Turn subTurn = new Turn(this.ai, p, this );
+		// Loop through, add mandatory states
+		for (Segment s : openSegs) {
+
+			//If this segment would claim a unit, it's a requisite move
+			if (GameState.segmentWouldClaimUnit(this.ai.scratchPad, s)) {
+				// Create a new turn
+				Turn subTurn = new Turn(this.ai, p, isRoot ? null : this);
 				subTurn.moves.add(s);
-				
-				//init a temporary state
+
+				// init a temporary state
 				ai.scratchPad.copyTo(tmpState);
-				
-				//do the first move
-				tmpState.doMove(s,p);
-				
+
+				// do the first move
+				tmpState.doMove(s, p);
+
+				//Loop through to pick up consecutive moves for this turn
 				boolean keepGoing = true;
-				while(keepGoing) {
+				while (keepGoing) {
 					keepGoing = false;
-					//Keep doing chain moves
+					// Keep doing chain moves
 					LinkedList<Segment> segs = tmpState.openSegments();
-					for(Segment s2: segs) {
-		              if(ai.segmentWouldClaimUnit(tmpState, s2)) {
-		            	  keepGoing=true;
-		            	  tmpState.doMove(s2, p);
-		            	  subTurn.moves.add(s2);
-		              }
+					for (Segment s2 : segs) {
+						if (GameState.segmentWouldClaimUnit(tmpState, s2)) {
+							keepGoing = true;
+							tmpState.doMove(s2, p);
+							subTurn.moves.add(s2);
+						}
 					}
 				}
-				
-				//Add new turns for the last move
+
+				// Add a new turn for each possible "last move" of the consecutive move sequence
 				LinkedList<Segment> segs = tmpState.openSegments();
-				//No more moves case
-				if(segs.size() == 0) {
+				// No more moves case
+				if (segs.size() == 0) {
 					ret.add(subTurn);
 				}
-				
-				for(Segment lastMove : segs) {
-					//Create a new move
-					Turn nt = new Turn(ai, p, this);
-					
-					//Take a copy of the moves from subTurn
+
+				for (Segment lastMove : segs) {
+					// Create a new move
+					Turn nt = new Turn(ai, p, isRoot ? null : this);
+
+					// Take a copy of the moves from subTurn
 					subTurn.copyMovesTo(nt);
-					
-					//Add the last move
+
+					// Add the last move
 					nt.moves.add(lastMove);
-					
+
 					ret.add(nt);
-					
-					
+
 				}
-        		
-        		
+
 			}
 		}
-		
-		//Pick up basic moves if no jump moves were found
-		//Get open segments for this state
-		if(ret.size() == 0) {
-		  openSegs = this.ai.scratchPad.openSegments(); 
 
-  		  //Loop through, add mandatory states
-		  for(Segment s: openSegs) {
-			  Turn basicTurn = new Turn(ai, p, this);
-			  basicTurn.moves.add(s);
-			  ret.add(basicTurn);
-		  }
+		// Pick up basic moves if no jump moves were found
+		if (ret.size() == 0) {
+			openSegs = this.ai.scratchPad.openSegments();
+			for (Segment s : openSegs) {
+				Turn basicTurn = new Turn(ai, p, isRoot ? null : this);
+				basicTurn.moves.add(s);
+				ret.add(basicTurn);
+			}
 		}
 		return ret;
-		
+
 	}
-	
-	//Reliably sorts segment lists
-	class SegmentSort implements Comparator<Segment> {
-		@Override
-		public int compare(Segment a, Segment b) {
-			String aStr = a.encode();
-			String bStr = b.encode();
-			return aStr.compareTo(bStr);
-		}
-	} 
-	
-	static final Turn instance = new Turn();
-	static final SegmentSort segCmp = instance.new SegmentSort();
-	static final LinkedList<Segment> tmpMoveList = new LinkedList<Segment>(); 
-	public String encode() {
-		String ret = new String();
-		//Make a copy of the move list
-		tmpMoveList.clear();
-		for(Segment s: moves) {
-			tmpMoveList.add(s);
-		}
-		Collections.sort(tmpMoveList, segCmp);
-		
-		for(Segment s: tmpMoveList) {
-			ret += s.encode();
-		}
-		
-		return ret;
-	}
+
 }
