@@ -36,11 +36,13 @@ class Turn {
 	GameState.Player p;
 	static final GameState evalPad = new GameState();
 
+	
 	int eval(GameState.Player p) {
 		
 		//Get the claimed areas of the current game state
 		int myUnits = this.ai.gs.getClaimedArea(p);
 		int theirUnits = this.ai.gs.getClaimedArea(GameState.otherPlayer(p));
+		
 		
 		//Initialize a scratch pad state
 		this.ai.gs.copyTo(evalPad);
@@ -77,24 +79,8 @@ class Turn {
 		//assign an overall objective value for these turns
 		int retVal = (myUnits - theirUnits) + winBonus;
 		
-		int i = 1;
-		int count = 0;
-		int rep[][] = new int[ai.gs.dimX-1][ai.gs.dimY-1];
+
 		
-		for(int y = 0; y < ai.gs.dimY-1; y++) {
-			for(int x = 0; x < ai.gs.dimX -1; x++) {
-				if(GameState.fillFragment(x,y, i++, rep, evalPad)) {
-					count++;
-				}
-			}
-		}
-		System.out.println("count is " + count);
-		for(int[] row : rep) {
-			for(int val : row) {
-				System.out.print(val + " ");
-			}
-			System.out.println( );
-		}
 		return retVal;
 
 	}
@@ -122,6 +108,7 @@ class Turn {
 	}
 
 	Turn parent;
+	
 	LinkedList<Segment> moves = new LinkedList<Segment>();
 
 	public Turn(AI ai, GameState.Player p, Turn parent) {

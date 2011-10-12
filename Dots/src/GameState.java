@@ -12,8 +12,8 @@ public class GameState {
 	}
 	public Segment lastMove;
 	
-	public static int dimX = 4;
-	public static int dimY = 4;
+	public static int dimX = 8;
+	public static int dimY = 8;
 	
 	public String toString() {
 		String ret = new String();
@@ -68,6 +68,11 @@ public class GameState {
 	//Segments 
 	public Player[][] segX = new Player[dimY][dimX-1];
     public Player[][] segY = new Player[dimY-1][dimX];
+    
+    
+    
+	public boolean hitMapX[][] = new boolean[dimY][dimX-1];
+    public boolean hitMapY[][] = new boolean[dimY-1][dimX];
 	
 	//Claimed units
 	public Player[][] claimedUnits = new Player[dimY][dimX];
@@ -150,11 +155,35 @@ public class GameState {
 		return ret;
 	}
 	
+	public void doMove2(Segment s, Player p) {
+		   Player seg[][];
+		   if(s.isY) {
+			   seg = segY;
+		   }
+		   else {
+			   seg = segX;
+		   }
+		   assert(seg[s.y][s.x] == null);
+		   
+		   //apply the segment
+		   seg[s.y][s.x] = p;
+	}
+	public void undoMove2(Segment s) {
+		   Player seg[][];
+		   if(s.isY) {
+			   seg = segY;
+		   }
+		   else {
+			   seg = segX;
+		   }
+		   assert(seg[s.y][s.x] != null);
+		   
+		   //apply the segment
+		   seg[s.y][s.x] = null;
+	}
+	
 	public void doMove(Segment s, Player p) {
 	   
-	
-	    
-		
 	   Player seg[][];
 	   if(s.isY) {
 		   seg = segY;
@@ -198,6 +227,8 @@ public class GameState {
 	   lastMove = s;
 	   return;
 	}
+	
+	
 	
 	public static GameState.Player otherPlayer(GameState.Player p) {
 		if(p == GameState.Player.P1) return GameState.Player.P2;
@@ -321,11 +352,12 @@ public class GameState {
 		   return ret;
 	}
 
-        public static boolean fillFragment(int x, int y, int val, int rep[][], GameState gs ) {
+	    public static int rep[][] = new int[dimX-1][dimY-1];
+        public static void fillFragment(int x, int y, int val, int rep[][], GameState gs ) {
           //return if this point is already taken on the real state or if it's already 
           //colored on the representation
-          if(gs.claimedUnits[y][x] != null || rep[y][x] != 0) { 
-            return false;
+          if(rep[y][x] != 0) { 
+            return;
           } 
           
 
@@ -339,43 +371,192 @@ public class GameState {
         	  //remove an element
         	  Point p = q.poll();
         	  
-        	  if(rep[p.y][p.x] != 0) {
-        		  continue;
-        	  }
+        	  
         	  
               //color this point on the rep
               rep[p.y][p.x] = val;
               
-              System.out.println(p.x + ", " + p.y);
               //Check the right and left side
               if((p.y < gs.dimY - 1) &&
             	  p.x < gs.dimX - 2 &&
-                  gs.segY[p.y][p.x+1] == null) {
+                  gs.segY[p.y][p.x+1] == null &&
+                  rep[p.y][p.x+1] == 0) {
             	  q.add(new Point(p.x+1, p.y));
               }
               if((p.y < gs.dimY - 1) &&
             	  p.x > 0 && 
             	  p.x < (gs.dimX-1) &&
-            	  gs.segY[p.y][p.x] == null) {
+            	  gs.segY[p.y][p.x] == null && 
+            	  rep[p.y][p.x-1] == 0) {
             	  q.add(new Point(p.x-1, p.y));
               }
               
               //Check the top and bottom
               if((p.x < gs.dimX - 1) &&
                  (p.y > 0) &&
-            	  gs.segX[p.y][p.x] == null) {
+            	  gs.segX[p.y][p.x] == null &&
+            	  rep[p.y-1][p.x] == 0) {
                   q.add(new Point(p.x, p.y-1));        	  
               }
-              if((p.x < gs.dimX - 1) &&
+              if((p.x < gs.dimX ) &&
                  (p.y < gs.dimY - 2) &&
-                 	  gs.segX[p.y+1][p.x] == null) {
+                  gs.segX[p.y+1][p.x] == null &&
+                  rep[p.y+1][p.x] == 0) {
                        q.add(new Point(p.x, p.y+1));        	  
               }
           
           }
-          return true;
+          return;
         
         }
+        
+        static int getNumFragments(GameState gs) {
+    		int i = 1;
+    		int count = 0;
+
+    		//clear the rep
+    		for(int y = 0; y < GameState.dimY-1; y++) {
+    			for(int x = 0; x < GameState.dimX -1; x++) {
+    				GameState.rep[y][x] = 0;
+    			}
+    		}
+    		
+    		
+    		for(int y = 0; y < GameState.dimY-1; y++) {
+    			for(int x = 0; x < GameState.dimX -1; x++) {
+    				if(GameState.rep[y][x] == 0) {
+    				   count++;
+    				   GameState.fillFragment(x,y, i++, GameState.rep, gs);
+    				}
+    			}
+    		}
+    	/*	
+    		System.out.println("count is " + count);
+    		for(int[] row : GameState.rep) {
+    			for(int val : row) {
+    				System.out.print(val + " ");
+    			}
+    			System.out.println( );
+    		}
+    		*/
+    		return count;
+        }
+        
+    	public int numSegmentsAroundUnit(int x, int y, Segment connectiveSegmentOut) {
+    		int cnt =0;
+    		if(segX[y][x] != null) {
+    			cnt++;
+    		}
+    		else {
+    			connectiveSegmentOut.x = x; 
+    			connectiveSegmentOut.y = y;
+    			connectiveSegmentOut.isY = false;
+    		}
+    		if(segX[y+1][x] != null) {
+    			cnt++;
+    		}
+    		else {
+    			connectiveSegmentOut.x = x; 
+    			connectiveSegmentOut.y = y+1;
+    			connectiveSegmentOut.isY = false;
+    		}
+    		if(segY[y][x] != null) {
+    			cnt++;
+    		}
+    		else {
+    			connectiveSegmentOut.x = x; 
+    			connectiveSegmentOut.y = y;
+    			connectiveSegmentOut.isY = true;
+    		}
+    		if(segY[y][x+1] != null) {
+    			cnt++;
+    		}
+    		else {
+    			connectiveSegmentOut.x = x+1; 
+    			connectiveSegmentOut.y = y;
+    			connectiveSegmentOut.isY = true;
+    		}
+    		return cnt;
+    		
+    	}
+    	
+    	
+    	
+    	
+    		public static LinkedList<Segment> expandSegment(GameState gst, Segment root) {
+    		LinkedList<Segment> ret = new LinkedList<Segment>();
+    		ret.add(root);
+    		GameState.Player seg[][];
+
+    		if(root.isY) {
+    		  seg = gst.segY;
+    	    }
+    		else {
+    		  seg = gst.segX;
+    		}
+    		   
+    		
+    		//apply the first segment
+    		seg[root.y][root.x] = GameState.Player.P1;
+    		
+    		Segment connSeg = new Segment(0,0,false);
+    		LinkedList<Segment> q = new LinkedList<Segment>();
+    		q.add(root);
+    		Segment ns = null;
+    		while(q.size() > 0) {
+    			//pull an item off the front of q
+    			Segment s = q.poll();
+    			
+    	       //If it's a Y segment, consider the left side and right sides
+    			if(s.isY){
+    				 if(s.x != 0) {
+    					   if(gst.numSegmentsAroundUnit(s.x-1, s.y, connSeg) == 3) {
+    						   ns = new Segment(connSeg);
+    						   q.add(ns);
+    						   ret.add(ns);
+    						   gst.doMove2(connSeg, GameState.Player.P1);
+    					   }
+    				 }
+    				 if(s.x != GameState.dimX-1) {
+    					   if(gst.numSegmentsAroundUnit(s.x, s.y, connSeg) == 3) {
+    						   ns = new Segment(connSeg);
+    						   q.add(ns);
+    						   ret.add(ns);
+    						   gst.doMove2(connSeg, GameState.Player.P1);
+    					   }
+    				 }
+    			}
+    			//If it's an X segment, check the top and bottom
+    			else {
+    			   if(s.y != 0) {
+    				  if(gst.numSegmentsAroundUnit(s.x, s.y-1, connSeg) == 3 ) {
+    					   ns = new Segment(connSeg);
+    					   q.add(ns);
+    					   ret.add(ns);
+    					   gst.doMove2(connSeg, GameState.Player.P1);
+    			      }
+    			   }
+    				   
+    			   if(s.y != GameState.dimY-1) {
+    				   if(gst.numSegmentsAroundUnit(s.x, s.y, connSeg) == 3) {
+    					   ns = new Segment(connSeg);
+    					   q.add(ns);
+    					   ret.add(ns);
+    					   gst.doMove2(connSeg, GameState.Player.P1);  
+    				   }
+    			   }
+    					   
+    			}
+    		}
+    		
+    		//undo moves
+    		for(Segment m : ret) {
+    			gst.undoMove2(m);
+    		}
+    		
+    		return ret;
+    		
+    	}
 	
 	
 }

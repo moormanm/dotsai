@@ -47,13 +47,11 @@ public class DotsGame extends JFrame{
 		JMenuBar menuBar = new JMenuBar();
 		JMenu newGameMenu = new JMenu("New Game");
 		
-		makeDifficultyHandler("Tourist", 1, newGameMenu);
-		makeDifficultyHandler("Easy", 2, newGameMenu);
-		makeDifficultyHandler("Medium", 3, newGameMenu);
-		makeDifficultyHandler("Hard", 4, newGameMenu);
-		makeDifficultyHandler("Serious", 6, newGameMenu);
-		makeDifficultyHandler("Mental", 8, newGameMenu);
-		makeDifficultyHandler("Jedi Master", 10, newGameMenu);
+
+		makeDifficultyHandler("Easy", 1, newGameMenu);
+		makeDifficultyHandler("Medium", 2, newGameMenu);
+		makeDifficultyHandler("Hard", 3, newGameMenu);
+
 		
 		menuBar.add(newGameMenu);
 		return menuBar;
