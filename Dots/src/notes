@@ -1,0 +1,115 @@
+	public int numSegmentsAroundUnit(int x, int y, Segment connectiveSegmentOut) {
+		int cnt =0;
+		if(segX[y][x] != null) {
+			cnt++;
+		}
+		else {
+			connectiveSegmentOut.x = x; 
+			connectiveSegmentOut.y = y;
+			connectiveSegmentOut.isY = false;
+		}
+		if(segX[y+1][x] != null) {
+			cnt++;
+		}
+		else {
+			connectiveSegmentOut.x = x; 
+			connectiveSegmentOut.y = y+1;
+			connectiveSegmentOut.isY = false;
+		}
+		if(segY[y][x] != null) {
+			cnt++;
+		}
+		else {
+			connectiveSegmentOut.x = x; 
+			connectiveSegmentOut.y = y;
+			connectiveSegmentOut.isY = true;
+		}
+		if(segY[y][x+1] != null) {
+			cnt++;
+		}
+		else {
+			connectiveSegmentOut.x = x+1; 
+			connectiveSegmentOut.y = y;
+			connectiveSegmentOut.isY = true;
+		}
+		return cnt;
+		
+	}
+	
+	
+	
+	
+		public static LinkedList<Segment> expandSegment(GameState gst, Segment root) {
+		LinkedList<Segment> ret = new LinkedList<Segment>();
+		ret.add(root);
+		GameState.Player seg[][];
+
+		if(s.isY) {
+		  seg = gst.segY;
+	    }
+		else {
+		  seg = gst.segX;
+		}
+		   
+		
+		//apply the first segment
+		seg[root.y][root.x] = GameState.Player.P1;
+		
+		Segment connSeg = new Segment(0,0,false);
+		LinkedList<Segment> q = new LinkedList<Segment>();
+		q.add(root);
+		Segment ns = null;
+		while(q.size() > 0) {
+			//pull an item off the front of q
+			Segment s = q.poll();
+			
+	       //If it's a Y segment, consider the left side and right sides
+			if(s.isY){
+				 if(s.x != 0) {
+					   if(gst.numSegmentsAroundUnit(s.x-1, s.y, connSeg) == 3) {
+						   ns = new Segment(connSeg);
+						   q.add(ns);
+						   ret.add(ns);
+						   gst.doMove(connSeg, GameState.Player.P1);
+					   }
+				 }
+				 if(s.x != GameState.dimX-1) {
+					   if(gst.numSegmentsAroundUnit(s.x, s.y, connSeg) == 3) {
+						   ns = new Segment(connSeg);
+						   q.add(ns);
+						   ret.add(ns);
+						   gst.doMove(connSeg, GameState.Player.P1);
+					   }
+				 }
+			}
+			//If it's an X segment, check the top and bottom
+			else {
+			   if(s.y != 0) {
+				  if(gst.numSegmentsAroundUnit(s.x, s.y-1, connSeg) == 3 ) {
+					   ns = new Segment(connSeg);
+					   q.add(ns);
+					   ret.add(ns);
+					   gst.doMove(connSeg, GameState.Player.P1);
+			      }
+			   }
+				   
+			   if(s.y != GameState.dimY-1) {
+				   if(gst.numSegmentsAroundUnit(s.x, s.y, connSeg) == 3) {
+					   ns = new Segment(connSeg);
+					   q.add(ns);
+					   ret.add(ns);
+					   gst.doMove(connSeg, GameState.Player.P1);  
+				   }
+			   }
+					   
+			}
+		}
+		
+		//undo moves
+		for(Segment m : ret) {
+			gst.undoMove(m);
+		}
+		
+		return ret;
+		
+	}
