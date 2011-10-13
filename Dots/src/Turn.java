@@ -1,3 +1,6 @@
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 class Turn {
@@ -134,7 +137,6 @@ class Turn {
 		// Init the scratch pad
 		this.ai.gs.copyTo(this.ai.scratchPad);
 
-		System.out.println(this);
 		// Apply parent turns to get to the current state
 		applyTurnsToGameState(this.ai.scratchPad, this);
 
@@ -168,6 +170,8 @@ class Turn {
 
 				ret.add(nt);
 			}
+			
+			
 		}
 
 
@@ -180,9 +184,71 @@ class Turn {
 				ret.add(basicTurn);
 			}
 		}
-		System.out.println("Branching factor is " + ret.size());
+		//System.out.println("Branching factor is " + ret.size());
+		
+		//Remove "duplicate" moves. Not really duplicates, but they produce the same result for the 
+		//other player.
+		reduceTurns(ret, ai.gs);
+		
+		System.out.println(ret.size() + " possible turns");
 		return ret;
 
 	}
+	
+	static final GameState reducePad = new GameState();
+	static void reduceTurns(LinkedList<Turn> turnList, GameState gst) {
+		if(turnList.size() < 2) {
+			return;
+		}
+		
+		//init the temp area
+		gst.copyTo(reducePad);
+		
+		Turn.applyTurnsToGameState(reducePad, turnList.get(0).parent);
+		
+		//Get the prefix moves
+		LinkedList<Segment> prefix = new LinkedList<Segment>();
+		if(turnList.get(0).moves.size() > 1) {
+			for(Segment s: turnList.get(0).moves ) {
+				prefix.add(s);
+			}
+			prefix.removeLast();
+			
+			for(Segment s: prefix) {
+				reducePad.doMove2(s, GameState.Player.P1);
+			}
+			
+		}
+		
+		
+		LinkedList<Turn> alphaTurns = new LinkedList<Turn>();
+		HashSet<String> segSet = new HashSet<String>();
+		Iterator<Turn> i = turnList.iterator();
+		top:
+		while(i.hasNext()) {
+			Turn t = i.next();
+			
+			if(segSet.contains(t.moves.getLast().encode())) {
+				//remove this item. it's a duplicate
+				//System.out.println("PRUNING A MOVE!!!!!!!!!!!!!!!!!!!!!!");
+				i.remove();
+				continue top;
+			}
+			reducePad.doMove2(t.moves.getLast(), GameState.Player.P1);
+			LinkedList<Segment> hits = GameState.getMandatorySegments(reducePad, t.moves.getLast(), true);
+			reducePad.undoMove2(t.moves.getLast());
+			for(Segment s: hits) {
+					segSet.add(s.encode());
+			}
+		}
+			
+	}
+		
+		
+		
+		
+		
+
+
 
 }

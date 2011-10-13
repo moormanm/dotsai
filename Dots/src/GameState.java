@@ -12,8 +12,8 @@ public class GameState {
 	}
 	public Segment lastMove;
 	
-	public static int dimX = 8;
-	public static int dimY = 8;
+	public static int dimX = 7;
+	public static int dimY = 7;
 	
 	public String toString() {
 		String ret = new String();

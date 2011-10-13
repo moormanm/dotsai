@@ -1,5 +1,7 @@
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 
 public class AI {
@@ -63,6 +65,8 @@ public class AI {
 
 	}
 
+	int stopProc = 0;
+	
 	// tells the AI to take a turn on gamestate
 	void takeTurn(GameState.Player p) {
 
@@ -75,7 +79,7 @@ public class AI {
 
 		// Shuffle the list of possible turns so it appears that the AI is more
 		// human like
-		//Collections.shuffle(list);
+		Collections.shuffle(list);
 
 		int max = Integer.MIN_VALUE;
 		Turn bestTurn = null;
@@ -86,8 +90,11 @@ public class AI {
 		Vector<Integer> results = new Vector<Integer>();
 		LinkedList<Turn> evaledTurns = new LinkedList<Turn>();
 
+		
 		for (Turn t : list) {
-			int tmp = -alphabeta(t, GameState.otherPlayer(p), maxDepth - 1,
+		
+			
+			int tmp = -alphabeta(t, GameState.otherPlayer(p), list.size() < 20 ? maxDepth+1 : maxDepth - 1,
 					Integer.MIN_VALUE, Integer.MAX_VALUE, bestTurnContainer);
 			results.add(tmp);
 			evaledTurns.add(bestTurnContainer.t);
@@ -101,13 +108,14 @@ public class AI {
 			}
 		}
 
-		//bestTurn = intuitiveBestTurn(evaledTurns, results, max, bestTurn);
+		bestTurn = intuitiveBestTurn(evaledTurns, results, max, bestTurn);
 
 		/*
 		 * Turn bestTurn = iterativeDeepeningSearch(p, 6, Integer.MAX_VALUE,
 		 * 500); System.out.println("Best Turn :" + bestTurn + " is  : " + max);
 		 */
 		System.out.println("Best Turn :" + bestTurn + " is  : " + max);
+		System.out.println("Deepest node depth :" + deepestNodeDepth);
 		while (bestTurn.parent != null) {
 			bestTurn = bestTurn.parent;
 		}
@@ -125,8 +133,8 @@ public class AI {
 	// Alpha beta search method. Like minimax, but more efficient
 	int alphabeta(Turn t, GameState.Player p, int depth, int alpha, int beta,
 			TurnContainer bestTurnContainer) {
-		deepestNodeDepth = Math.max(deepestNodeDepth, depth);
-		if (depth <= 0) {
+		
+		if (depth == 0) {
 			bestTurnContainer.t = t;
 			return t.eval(p);
 		}
@@ -185,21 +193,10 @@ public class AI {
 		boolean fragOverride = false;
 		int bestMoveCount = 0;
 
-		//Determine if we must give up a move regardless. This signifies that we are in the END GAME
-		boolean mustGiveUpMove = true;
-		for (Turn t : turnList) {
-     		while (t.parent != null && t.parent.parent != null) {
-	    		t = t.parent;
-		    }
-     		//The player 1 node having more than one move means they took a unit as a result of our move
-     		if(t.moves.size() == 1) {
-     			mustGiveUpMove = false;
-     		}
-		}
 		
 		
 		
-		if (mustGiveUpMove) {
+		if (false) {
 			System.out.println("Going DEEP!");
 			System.out.println("Total available moves are: " + turnList.size());
 		}
@@ -288,8 +285,7 @@ public class AI {
 	final GameState temp = new GameState();
 	boolean reduceMove(Turn turn, GameState rPad, boolean hitMapX[][], boolean hitMapY[][]) {
 		
-		//Copy off gamestate
-		rPad.copyTo(temp);
+	
 		
 		//Get the first move out of the turn
 		Segment s = turn.moves.get(0);
@@ -311,7 +307,9 @@ public class AI {
 				hitMapX[s.y][s.x] = true;
 			}
 		}
-		
+	
+		//Copy off gamestate
+		rPad.copyTo(temp);
 		
 		//Apply the move to the state. Will have to undo it later.
 		for(Segment seg : turn.moves) {
