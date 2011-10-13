@@ -27,7 +27,7 @@ public class AI {
 
 		// Shuffle the list of possible turns so it appears that the AI is more
 		// human like
-		Collections.shuffle(list);
+		//Collections.shuffle(list);
 
 		Turn bestTurn = null;
 
@@ -75,7 +75,7 @@ public class AI {
 
 		// Shuffle the list of possible turns so it appears that the AI is more
 		// human like
-		Collections.shuffle(list);
+		//Collections.shuffle(list);
 
 		int max = Integer.MIN_VALUE;
 		Turn bestTurn = null;
@@ -101,7 +101,7 @@ public class AI {
 			}
 		}
 
-		bestTurn = intuitiveBestTurn(evaledTurns, results, max, bestTurn);
+		//bestTurn = intuitiveBestTurn(evaledTurns, results, max, bestTurn);
 
 		/*
 		 * Turn bestTurn = iterativeDeepeningSearch(p, 6, Integer.MAX_VALUE,
@@ -133,25 +133,9 @@ public class AI {
 
 		LinkedList<Turn> children = t.possibleTurnsForPlayer(p);
 		if (children.size() == 0) {
+			
 			bestTurnContainer.t = t;
 			return t.eval(p);
-		}
-		
-		//Determine if we must give up a move regardless. This signifies that we are in the END GAME
-		//Search tree can be pruned SIGNIFICANTLY
-		boolean mustGiveUpMove = true;
-		for (Turn c :children) {
-     		//The player 1 node having more than one move means they took a unit as a result of our move
-     		if(c.moves.size() == 1) {
-     			mustGiveUpMove = false;
-     		}
-		}
-		
-		if(mustGiveUpMove) {
-			
-			for(Turn c : children) {
-				
-			}
 		}
 		
 

@@ -23,6 +23,7 @@ class Turn {
 
 		parents.addLast(this);
 		for (Turn t : parents) {
+			ret += t.p + ":: ";
 			for (Segment s : t.moves) {
 				ret += s.toString() + "; ";
 			}
@@ -133,75 +134,53 @@ class Turn {
 		// Init the scratch pad
 		this.ai.gs.copyTo(this.ai.scratchPad);
 
+		System.out.println(this);
 		// Apply parent turns to get to the current state
 		applyTurnsToGameState(this.ai.scratchPad, this);
 
-		// Get open segments for this state
-		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments();
+		// Get mandatory states
+		Segment theLastMove = (this.moves.size() > 0) ? theLastMove = moves.getLast() : ai.gs.lastMove;
+		LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, theLastMove , false);
+		
+		// if there were mandatory segments..
+		if(mandSegs.size() > 0) {
+			// Create a new turn
+			Turn subTurn = new Turn(this.ai, p, isRoot ? null : this);
+			subTurn.moves = mandSegs;
+			
+			// Add a new turn for each possible "last move" of the consecutive move sequence
+			LinkedList<Segment> segs = ai.scratchPad.openSegments();
+			
+			// No more moves case
+			if (segs.size() == 0) {
+				ret.add(subTurn);
+			}
 
-		// Loop through, add mandatory states
-		for (Segment s : openSegs) {
-
-			//If this segment would claim a unit, it's a requisite move
-			if (GameState.segmentWouldClaimUnit(this.ai.scratchPad, s)) {
+			for (Segment lastMove : segs) {
 				// Create a new turn
-				Turn subTurn = new Turn(this.ai, p, isRoot ? null : this);
-				subTurn.moves.add(s);
+				Turn nt = new Turn(ai, p, isRoot ? null : this);
 
-				// init a temporary state
-				ai.scratchPad.copyTo(tmpState);
+				// Take a copy of the moves from subTurn
+				subTurn.copyMovesTo(nt);
 
-				// do the first move
-				tmpState.doMove(s, p);
+				// Add the last move
+				nt.moves.add(lastMove);
 
-				//Loop through to pick up consecutive moves for this turn
-				boolean keepGoing = true;
-				while (keepGoing) {
-					keepGoing = false;
-					// Keep doing chain moves
-					LinkedList<Segment> segs = tmpState.openSegments();
-					for (Segment s2 : segs) {
-						if (GameState.segmentWouldClaimUnit(tmpState, s2)) {
-							keepGoing = true;
-							tmpState.doMove(s2, p);
-							subTurn.moves.add(s2);
-						}
-					}
-				}
-
-				// Add a new turn for each possible "last move" of the consecutive move sequence
-				LinkedList<Segment> segs = tmpState.openSegments();
-				// No more moves case
-				if (segs.size() == 0) {
-					ret.add(subTurn);
-				}
-
-				for (Segment lastMove : segs) {
-					// Create a new move
-					Turn nt = new Turn(ai, p, isRoot ? null : this);
-
-					// Take a copy of the moves from subTurn
-					subTurn.copyMovesTo(nt);
-
-					// Add the last move
-					nt.moves.add(lastMove);
-
-					ret.add(nt);
-
-				}
-
+				ret.add(nt);
 			}
 		}
 
-		// Pick up basic moves if no jump moves were found
+
+		// Pick up basic moves if no chain moves were found
 		if (ret.size() == 0) {
-			openSegs = this.ai.scratchPad.openSegments();
+			LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments();
 			for (Segment s : openSegs) {
 				Turn basicTurn = new Turn(ai, p, isRoot ? null : this);
 				basicTurn.moves.add(s);
 				ret.add(basicTurn);
 			}
 		}
+		System.out.println("Branching factor is " + ret.size());
 		return ret;
 
 	}

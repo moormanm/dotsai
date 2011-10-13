@@ -7,7 +7,7 @@ public class Segment {
     public void copyTo(Segment s) {
     	s.x = this.x;
     	s.y = this.y;
-    	s.isY = s.isY;
+    	s.isY = this.isY;
     }
   public Segment(Segment copy) {
 	  copy.copyTo(this);

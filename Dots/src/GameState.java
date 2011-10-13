@@ -191,6 +191,8 @@ public class GameState {
 	   else {
 		   seg = segX;
 	   }
+	   
+	   
 	   assert(seg[s.y][s.x] == null);
 	   
 	   //apply the segment
@@ -483,26 +485,19 @@ public class GameState {
     	
     	
     	
-    		public static LinkedList<Segment> expandSegment(GameState gst, Segment root) {
+    		public static LinkedList<Segment> getMandatorySegments(GameState gst, Segment root, boolean undo) {
     		LinkedList<Segment> ret = new LinkedList<Segment>();
-    		ret.add(root);
+    		if(root == null) {
+    			return ret;
+    		}
     		GameState.Player seg[][];
 
-    		if(root.isY) {
-    		  seg = gst.segY;
-    	    }
-    		else {
-    		  seg = gst.segX;
-    		}
-    		   
-    		
-    		//apply the first segment
-    		seg[root.y][root.x] = GameState.Player.P1;
-    		
     		Segment connSeg = new Segment(0,0,false);
     		LinkedList<Segment> q = new LinkedList<Segment>();
-    		q.add(root);
     		Segment ns = null;
+    		
+    		q.add(root);
+    		
     		while(q.size() > 0) {
     			//pull an item off the front of q
     			Segment s = q.poll();
@@ -550,9 +545,11 @@ public class GameState {
     		}
     		
     		//undo moves
-    		for(Segment m : ret) {
-    			gst.undoMove2(m);
-    		}
+    		if(undo) {
+    		  for(Segment m : ret) {
+    			  gst.undoMove2(m);
+    		  }
+    	    }
     		
     		return ret;
     		
