@@ -11,10 +11,6 @@ import javax.swing.border.TitledBorder;
 
 public class Utilities {
 
-
-
-	
-	
 	public static void setSwingFont(javax.swing.plaf.FontUIResource f) {
 		java.util.Enumeration<Object> keys = UIManager.getDefaults().keys();
 		while (keys.hasMoreElements()) {

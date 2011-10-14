@@ -1,16 +1,10 @@
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 class Turn {
 
-	/**
-	 * 
-	 */
-
 	private final AI ai;
-
 	boolean isRoot = false;
 	
 	public String toString() {
@@ -46,14 +40,15 @@ class Turn {
 		//Get the claimed areas of the current game state
 		int myUnits = this.ai.gs.getClaimedArea(p);
 		int theirUnits = this.ai.gs.getClaimedArea(GameState.otherPlayer(p));
-		
-		
+
 		//Initialize a scratch pad state
 		this.ai.gs.copyTo(evalPad);
-		
-		//Apply this turn set to the scratch pad
+			
+		//Apply the turn to the scratch pad
 		applyTurnsToGameState(evalPad, this);
+		
 
+		//System.out.println(evalPad);
 		//Get the number of claimed areas after the turns have been applied
 		int myUnitsAfter = evalPad.getClaimedArea(p);
 		int theirUnitsAfter = evalPad.getClaimedArea(GameState.otherPlayer(p));
@@ -65,27 +60,26 @@ class Turn {
 
 		// If this is the end game state, assign a HUGE bonus or penalty
 		int winBonus = 0;
-		if (evalPad.hasOpenSegments() == false) {
+		
+		//if there are no segments left, or the difference is greater than the remaining units 
+		if (evalPad.hasOpenSegments() == false) { 
 			if (diff > 0) {
 				winBonus = Integer.MAX_VALUE / 2;
-		//		System.out.println("Win bonus for player " + p.toString());
 			} else if (diff == 0) {
-				//System.out.println("Draw bonus for player " + p.toString());
 				winBonus = Integer.MAX_VALUE / 4;
 			} else {
 				winBonus = -1 * Integer.MAX_VALUE / 2;
-				//System.out.println("Lose bonus for player " + p.toString());
 			}
 
 		}
 		
 		
 		//assign an overall objective value for these turns
-		int retVal = (myUnits - theirUnits) + winBonus;
+		int retVal = (myUnits - theirUnits)*4 + winBonus;
 		
-
 		
-		return retVal;
+		//The immediate turn should have a bearing on the overall value. 
+		return retVal ;
 
 	}
 
@@ -141,8 +135,7 @@ class Turn {
 		applyTurnsToGameState(this.ai.scratchPad, this);
 
 		// Get mandatory states
-		Segment theLastMove = (this.moves.size() > 0) ? theLastMove = moves.getLast() : ai.gs.lastMove;
-		LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, theLastMove , false);
+		LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, false);
 		
 		// if there were mandatory segments..
 		if(mandSegs.size() > 0) {
@@ -156,6 +149,21 @@ class Turn {
 			// No more moves case
 			if (segs.size() == 0) {
 				ret.add(subTurn);
+			}
+			
+			//Double cross strategy case
+			if(mandSegs.size() >= 2) {
+				// Create a new turn
+				Turn nt = new Turn(ai, p, isRoot ? null : this);
+				
+				// Take a copy of the moves from subTurn
+				subTurn.copyMovesTo(nt);
+				
+				// Remove the last move
+				nt.moves.removeLast();
+				
+				ret.add(nt);
+
 			}
 
 			for (Segment lastMove : segs) {
@@ -184,26 +192,25 @@ class Turn {
 				ret.add(basicTurn);
 			}
 		}
-		//System.out.println("Branching factor is " + ret.size());
 		
 		//Remove "duplicate" moves. Not really duplicates, but they produce the same result for the 
 		//other player.
 		reduceTurns(ret, ai.gs);
 		
-		System.out.println(ret.size() + " possible turns");
+		System.out.println("Branching factor: " + ret.size());
 		return ret;
 
 	}
 	
 	static final GameState reducePad = new GameState();
 	static void reduceTurns(LinkedList<Turn> turnList, GameState gst) {
+		//Can't reduce a single turn
 		if(turnList.size() < 2) {
 			return;
 		}
 		
-		//init the temp area
+		//init a temporary state
 		gst.copyTo(reducePad);
-		
 		Turn.applyTurnsToGameState(reducePad, turnList.get(0).parent);
 		
 		//Get the prefix moves
@@ -217,25 +224,26 @@ class Turn {
 			for(Segment s: prefix) {
 				reducePad.doMove2(s, GameState.Player.P1);
 			}
-			
 		}
 		
-		
-		LinkedList<Turn> alphaTurns = new LinkedList<Turn>();
 		HashSet<String> segSet = new HashSet<String>();
 		Iterator<Turn> i = turnList.iterator();
 		top:
 		while(i.hasNext()) {
 			Turn t = i.next();
 			
+			//if this is a double cross move, add it regardless
+			if(t.moves.size() == prefix.size()) {
+				continue;
+			}
+			
 			if(segSet.contains(t.moves.getLast().encode())) {
 				//remove this item. it's a duplicate
-				//System.out.println("PRUNING A MOVE!!!!!!!!!!!!!!!!!!!!!!");
 				i.remove();
 				continue top;
 			}
 			reducePad.doMove2(t.moves.getLast(), GameState.Player.P1);
-			LinkedList<Segment> hits = GameState.getMandatorySegments(reducePad, t.moves.getLast(), true);
+			LinkedList<Segment> hits = GameState.getMandatorySegments(reducePad, true);
 			reducePad.undoMove2(t.moves.getLast());
 			for(Segment s: hits) {
 					segSet.add(s.encode());

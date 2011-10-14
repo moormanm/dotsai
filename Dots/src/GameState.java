@@ -15,35 +15,32 @@ public class GameState {
 	public static int dimX = 7;
 	public static int dimY = 7;
 	
+	@Override
 	public String toString() {
 		String ret = new String();
  		//check x moves
 		for(int y =0; y < dimY; y++) {
+			for(int x=0; x < dimX-1; x++) {
+					  if(segX[y][x] != null) {
+						 ret += "  _";
+					  }
+					  else { 
+                		ret += "   ";
+					  }
+			}
+			ret+= System.getProperty("line.separator");
 			for(int x=0; x < dimX; x++) {
 				if(y < (dimY - 1)) {
 					  if(segY[y][x] != null) {
-						 ret += "| ";
+						 ret += "|   ";
 					  }
 					  else { 
-						ret += "  ";
+						ret += "    ";
 					  }
 				}
-				
-				if(x < (dimX - 1)){
-				  if(segX[y][x] != null) {
-					 ret += "_ ";
-				  }
-				  else { 
-					ret += "  ";
-				  }
-				}
-
-				
-				
 			}
 			ret+= System.getProperty("line.separator");
-			
-		}
+		}	
 		ret+= System.getProperty("line.separator");
 		
 		for(int i =0; i < dimY-1; i++) {
@@ -379,29 +376,29 @@ public class GameState {
               rep[p.y][p.x] = val;
               
               //Check the right and left side
-              if((p.y < gs.dimY - 1) &&
-            	  p.x < gs.dimX - 2 &&
+              if((p.y < GameState.dimY - 1) &&
+            	  p.x < GameState.dimX - 2 &&
                   gs.segY[p.y][p.x+1] == null &&
                   rep[p.y][p.x+1] == 0) {
             	  q.add(new Point(p.x+1, p.y));
               }
-              if((p.y < gs.dimY - 1) &&
+              if((p.y < GameState.dimY - 1) &&
             	  p.x > 0 && 
-            	  p.x < (gs.dimX-1) &&
+            	  p.x < (GameState.dimX-1) &&
             	  gs.segY[p.y][p.x] == null && 
             	  rep[p.y][p.x-1] == 0) {
             	  q.add(new Point(p.x-1, p.y));
               }
               
               //Check the top and bottom
-              if((p.x < gs.dimX - 1) &&
+              if((p.x < GameState.dimX - 1) &&
                  (p.y > 0) &&
             	  gs.segX[p.y][p.x] == null &&
             	  rep[p.y-1][p.x] == 0) {
                   q.add(new Point(p.x, p.y-1));        	  
               }
-              if((p.x < gs.dimX ) &&
-                 (p.y < gs.dimY - 2) &&
+              if((p.x < GameState.dimX ) &&
+                 (p.y < GameState.dimY - 2) &&
                   gs.segX[p.y+1][p.x] == null &&
                   rep[p.y+1][p.x] == 0) {
                        q.add(new Point(p.x, p.y+1));        	  
@@ -485,18 +482,21 @@ public class GameState {
     	
     	
     	
-    		public static LinkedList<Segment> getMandatorySegments(GameState gst, Segment root, boolean undo) {
+    		public static LinkedList<Segment> getMandatorySegments(GameState gst, boolean undo) {
     		LinkedList<Segment> ret = new LinkedList<Segment>();
-    		if(root == null) {
-    			return ret;
-    		}
-    		GameState.Player seg[][];
 
     		Segment connSeg = new Segment(0,0,false);
     		LinkedList<Segment> q = new LinkedList<Segment>();
     		Segment ns = null;
-    		
-    		q.add(root);
+
+    		//Find the root segments
+    		for(int y = 0; y < GameState.dimY-1; y++) {
+    			for(int x = 0; x < GameState.dimX-1; x++) {
+    				if(gst.claimedUnits[y][x] == null && gst.numSegmentsAroundUnit(x, y, connSeg) == 3) {
+    					q.add(new Segment(connSeg));
+    				}
+    			}
+    		}
     		
     		while(q.size() > 0) {
     			//pull an item off the front of q

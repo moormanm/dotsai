@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
@@ -22,6 +23,7 @@ public class GameBoardPanel extends JLayeredPane {
 	private static final long serialVersionUID = 1L;
 	public JLabel p1Score = new JLabel();
 	public JLabel p2Score = new JLabel();
+	public JButton skipButton = new JButton("Sacrifice");
 	final DrawingPanel drawingPanel = new DrawingPanel();
 	private class DrawingPanel extends JPanel{
 		/**
@@ -168,25 +170,7 @@ public class GameBoardPanel extends JLayeredPane {
 				return;
 			}
 			
-		    //Enforce the restriction that jumps must be made if there are jumps to be had.
-			if(! GameState.segmentWouldClaimUnit(gameState, s)) {
-				boolean canJump = false;
-				for(Segment os : gameState.openSegments()) {
-					if(GameState.segmentWouldClaimUnit(gameState, os)) {
-						canJump = true;
-						break;
-					}
-				}
-				if(canJump) {
-					Utilities.showError("Move not allowed. There is a jump move to be made.");
-					lastClicked.setSelected(false);
-					lastClicked=null;
-					db.setSelected(false);
-					return;
-					
-				}
-				
-			}
+			
 			
 			
 			int b4 = gameState.getClaimedArea(GameState.Player.P1);
@@ -195,37 +179,59 @@ public class GameBoardPanel extends JLayeredPane {
 			lastClicked.setSelected(false);
 		    lastClicked = null;
 		    db.setSelected(false);
+		    
+		   //Enable skip button if there is a sacrifice to be made
+			boolean canJump = false;
+			for (Segment os : gameState.openSegments()) {
+				if (GameState.segmentWouldClaimUnit(gameState, os)) {
+					canJump = true;
+					break;
+				}
+			}
+			skipButton.setEnabled(canJump);
+		    
 		    //If no area claimed, computer's turn
 		    if(gameState.getClaimedArea(GameState.Player.P1) - b4 == 0) {
 			  AI ai = new AI(gameState);
 			  ai.takeTurn(GameState.Player.P2);
 			  drawingPanel.repaint();
+			  skipButton.setEnabled(false);
 		    }
+		    
+		    
 		    
 		    //Update score
 		    p1Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P1)));
 		    p2Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P2)));
 		    
+		   
+			
+			
+		    
 		    //if no more open segments, lock the panel, notify that the game is over
 		    if(gameState.hasOpenSegments() == false ) {
-		    	int p1 = gameState.getClaimedArea(GameState.Player.P1);
-		    	int p2 = gameState.getClaimedArea(GameState.Player.P2);
-		    	String str = "";
-		    	if(p1 > p2) {
-		    	  str = "Red wins!";	
-		    	}
-		    	else if (p1 == p2) {
-		    	  str = "Draw!";
-		    	}
-		    	else {
-		    	  str = "Blue wins!";
-		    	}
-		    	Utilities.showInfo(str, "Game Over");
-		    	
-		    	lockControls(true);
+		    	handleGameOver();
 		    }
 		}
 		
+	}
+
+	void handleGameOver() {
+    	int p1 = gameState.getClaimedArea(GameState.Player.P1);
+    	int p2 = gameState.getClaimedArea(GameState.Player.P2);
+    	String str = "";
+    	if(p1 > p2) {
+    	  str = "Red wins!";	
+    	}
+    	else if (p1 == p2) {
+    	  str = "Draw!";
+    	}
+    	else {
+    	  str = "Blue wins!";
+    	}
+    	Utilities.showInfo(str, "Game Over");
+    	
+    	lockControls(true);
 	}
 	
 	class DotsButton extends JRadioButton {
@@ -281,12 +287,35 @@ public class GameBoardPanel extends JLayeredPane {
 		scorePanel.setLocation(new Point(DrawingPanel.margin + GameState.dimX*unitSize,  DrawingPanel.margin + unitSize));
 		JLabel s1 = Utilities.standardLabel("Red :");
 		JLabel s2 = Utilities.standardLabel("Blue :");
+		skipButton.setSize(120,30);
+		skipButton.setLocation(new Point(scorePanel.getLocation().x,
+				                         scorePanel.getLocation().y + scorePanel.getHeight() + 10));
 		scorePanel.add(s1);
 		scorePanel.add(p1Score);
 		scorePanel.add(s2);
 		scorePanel.add(p2Score);
 		add(scorePanel, JLayeredPane.POPUP_LAYER);
-
+		add(skipButton, JLayeredPane.POPUP_LAYER);
+		skipButton.setEnabled(false);
+		skipButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				AI ai = new AI(gameState);
+				ai.takeTurn(GameState.Player.P2);
+				
+				drawingPanel.repaint();
+				
+			    //Update score
+			    p1Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P1)));
+			    p2Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P2)));
+			    
+			    //if no more open segments, lock the panel, notify that the game is over
+			    if(gameState.hasOpenSegments() == false ) {
+			    	handleGameOver();
+			    }
+			}
+			
+		});
 		lockControls(true);
 		
 		
