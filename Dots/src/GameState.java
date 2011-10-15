@@ -3,15 +3,15 @@ import java.util.LinkedList;
 
 public class GameState {
 
-	GameState() {
-
-	}
-
+	//The last move (segment) applied to this state
 	public Segment lastMove;
 
+	//X and Y dots dimensions
 	public static int dimX = 7;
 	public static int dimY = 7;
 
+	
+	//Provides a string representation of this gamestate. Useful for debugging
 	@Override
 	public String toString() {
 		String ret = new String();
@@ -19,9 +19,9 @@ public class GameState {
 		for (int y = 0; y < dimY; y++) {
 			for (int x = 0; x < dimX - 1; x++) {
 				if (segX[y][x] != null) {
-					ret += "  _";
+					ret += "  _  ";
 				} else {
-					ret += "   ";
+					ret += "     ";
 				}
 			}
 			ret += System.getProperty("line.separator");
@@ -58,12 +58,10 @@ public class GameState {
 	public Player[][] segX = new Player[dimY][dimX - 1];
 	public Player[][] segY = new Player[dimY - 1][dimX];
 
-	public boolean hitMapX[][] = new boolean[dimY][dimX - 1];
-	public boolean hitMapY[][] = new boolean[dimY - 1][dimX];
-
 	// Claimed units
 	public Player[][] claimedUnits = new Player[dimY][dimX];
 
+	//Copies this game state to gs
 	public void copyTo(GameState gs) {
 		copyInline(gs.segX, segX);
 		copyInline(gs.segY, segY);
@@ -79,6 +77,7 @@ public class GameState {
 		}
 	}
 
+	
 	public void reset() {
 
 		for (int y = 0; y < dimY; y++) {
@@ -115,28 +114,7 @@ public class GameState {
 				&& segY[y][x] != null && segY[y][x + 1] != null;
 	}
 
-	public int numSegmentsForPoint(int x, int y) {
-
-		int ret = 0;
-		// Get the x segments that touch this point
-		if (x > 0) {
-			ret += segX[y][x - 1] == null ? 0 : 1;
-		}
-		if (x < dimX - 1) {
-			ret += segX[y][x] == null ? 0 : 1;
-		}
-
-		// Get the y segments that touch this point
-		if (y > 0) {
-			ret += segY[y - 1][x] == null ? 0 : 1;
-		}
-		if (y < (dimY - 2)) {
-			ret += segY[y][x] == null ? 0 : 1;
-		}
-
-		return ret;
-	}
-
+	//Applies a move to a state, not touching claimed units
 	public void doMove2(Segment s, Player p) {
 		Player seg[][];
 		if (s.isY) {
@@ -150,6 +128,7 @@ public class GameState {
 		seg[s.y][s.x] = p;
 	}
 
+	//Undoes a move. Does not touch claimed units
 	public void undoMove2(Segment s) {
 		Player seg[][];
 		if (s.isY) {
@@ -163,6 +142,7 @@ public class GameState {
 		seg[s.y][s.x] = null;
 	}
 
+	//Applies a move to a state, incrementing claimed units
 	public void doMove(Segment s, Player p) {
 
 		Player seg[][];
@@ -209,12 +189,14 @@ public class GameState {
 		return;
 	}
 
+	//Gets the non-p player
 	public static GameState.Player otherPlayer(GameState.Player p) {
 		if (p == GameState.Player.P1)
 			return GameState.Player.P2;
 		return GameState.Player.P1;
 	}
 
+	//Returns a list of open segments for this state
 	public LinkedList<Segment> openSegments() {
 		LinkedList<Segment> ret = new LinkedList<Segment>();
 
@@ -237,19 +219,14 @@ public class GameState {
 		return ret;
 	}
 
-	public void startNewGame() {
-		// Setup board segments
-		segX = new Player[dimY][dimX - 1];
-		segY = new Player[dimY - 1][dimX];
+	
 
-		claimedUnits = new Player[dimX - 1][dimY - 1];
-
-	}
-
+	//Player 1 and player two tokens
 	public enum Player {
 		P1, P2
 	};
 
+	//returns the number of units claimed by player a
 	public int getClaimedArea(Player a) {
 		int ret = 0;
 		for (int i = 0; i < dimY - 1; i++) {
@@ -262,6 +239,7 @@ public class GameState {
 		return ret;
 	}
 
+	//self explanatory
 	public boolean hasOpenSegments() {
 		// check x moves
 		for (int y = 0; y < dimY; y++) {

@@ -199,15 +199,10 @@ public class GameBoardPanel extends JLayeredPane {
 			  skipButton.setEnabled(false);
 		    }
 		    
-		    
-		    
 		    //Update score
 		    p1Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P1)));
 		    p2Score.setText(Integer.toString(gameState.getClaimedArea(GameState.Player.P2)));
 		    
-		   
-			
-			
 		    
 		    //if no more open segments, lock the panel, notify that the game is over
 		    if(gameState.hasOpenSegments() == false ) {

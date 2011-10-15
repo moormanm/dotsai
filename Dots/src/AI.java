@@ -1,5 +1,4 @@
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Vector;
 
@@ -65,7 +64,11 @@ public class AI {
 			}
 		}
 
-		bestTurn = intuitiveBestTurn(evaledTurns, results, max, bestTurn);
+		//If this is not easy mode, do post processing to further refine move
+		if(maxDepth != 1) {
+			bestTurn = intuitiveBestTurn(evaledTurns, results, max, bestTurn);
+		}	
+		
 		
 		System.out.println("Best Turn :" + bestTurn + " is  : " + max);
 		System.out.println("C is : " + c);
@@ -78,18 +81,6 @@ public class AI {
 
 	}
 
-	class TurnHeuristic implements Comparator<Turn> {
-
-		@Override
-		public int compare(Turn a, Turn b) {
-			Integer aRes = a.eval(a.p);
-			Integer bRes = b.eval(b.p);
-			return aRes.compareTo(bRes);
-		}
-		
-	}
-	final TurnHeuristic heuristicSort = new TurnHeuristic();
-	// Stupid class used to pass around turn objects by reference
 	class TurnContainer {
 		public Turn t;
 	}
@@ -109,8 +100,6 @@ public class AI {
 			return t.eval(p);
 		}
 
-		//Collections.sort(children, heuristicSort);
-		
 
 		int tmp = 0;
 		outer: for (Turn child : children) {
@@ -134,8 +123,8 @@ public class AI {
 		int maxFrag = Integer.MIN_VALUE;
 		int bestMoveCount = 0;
 
-		
-		
+
+			
 		
 		// discriminate best moves based on fragmentation factor
 		for (Turn t : turnList) {
