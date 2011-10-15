@@ -43,10 +43,10 @@ public class AI {
 		LinkedList<Turn> evaledTurns = new LinkedList<Turn>();
 
 		int c = 0;
-		if( list.size() < GameState.dimX ) {
+		if( list.size() < GameState.dimX  && maxDepth == 3) {
 			c = 8;
 		}
-		else if( list.size() < GameState.dimX + GameState.dimY) {
+		else if( list.size() < GameState.dimX + GameState.dimY && maxDepth == 3) {
 			c = 4;
 		}
 		

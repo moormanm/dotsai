@@ -16,7 +16,8 @@ public class Segment {
 	  this.x = x; this.y = y; this.isY = isY;
   }
   
-  public String toString() {
+  @Override
+public String toString() {
 	  return x + " ," + y + ", " + isY;
   }
   

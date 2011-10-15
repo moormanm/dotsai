@@ -38,7 +38,8 @@ public class GameBoardPanel extends JLayeredPane {
 			setOpaque(false);
 
 		}
-		 public void paintComponent(Graphics g_) {
+		 @Override
+		public void paintComponent(Graphics g_) {
 			    super.paintComponent(g_);
 			    int m = margin;
 			    Graphics2D g = (Graphics2D)g_;

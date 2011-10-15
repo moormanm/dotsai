@@ -7,6 +7,7 @@ class Turn {
 	private final AI ai;
 	boolean isRoot = false;
 	
+	@Override
 	public String toString() {
 		String ret = new String();
 		LinkedList<Turn> parents = new LinkedList<Turn>();
@@ -197,7 +198,7 @@ class Turn {
 		//other player.
 		reduceTurns(ret, ai.gs);
 		
-		System.out.println("Branching factor: " + ret.size());
+		//System.out.println("Branching factor: " + ret.size());
 		return ret;
 
 	}
