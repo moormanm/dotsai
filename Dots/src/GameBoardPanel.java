@@ -309,6 +309,7 @@ public class GameBoardPanel extends JLayeredPane {
 			    if(gameState.hasOpenSegments() == false ) {
 			    	handleGameOver();
 			    }
+			    skipButton.setEnabled(false);
 			}
 			
 		});

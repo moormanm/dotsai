@@ -1,4 +1,5 @@
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
 
@@ -16,8 +17,6 @@ public class AI {
 	GameState scratchPad = new GameState();
 	GameState scratchPad2 = new GameState();
 
-
-	
 	// tells the AI to take a turn on gamestate
 	void takeTurn(GameState.Player p) {
 
@@ -28,6 +27,8 @@ public class AI {
 		t1.isRoot = true;
 		LinkedList<Turn> list = t1.possibleTurnsForPlayer(p);
 
+		System.out.println("Branching factor is : " + list.size());
+		
 		// Shuffle the list of possible turns so it appears that the AI is more
 		// human like
 		Collections.shuffle(list);
@@ -42,19 +43,18 @@ public class AI {
 		LinkedList<Turn> evaledTurns = new LinkedList<Turn>();
 
 		int c = 0;
-		if( list.size() < GameState.dimX  && maxDepth == 3) {
+		if (list.size() < GameState.dimX && maxDepth == 3) {
 			c = 8;
-		}
-		else if( list.size() < GameState.dimX + GameState.dimY && maxDepth == 3) {
+		} else if (list.size() < GameState.dimX + GameState.dimY
+				&& maxDepth == 3) {
 			c = 4;
 		}
-		
-		
+
 		for (Turn t : list) {
-		
-			
+
 			int tmp = -alphabeta(t, GameState.otherPlayer(p), maxDepth - 1 + c,
 					Integer.MIN_VALUE, Integer.MAX_VALUE, bestTurnContainer);
+		//	System.out.println("Turn : " + bestTurnContainer.t + " is " + tmp );
 			results.add(tmp);
 			evaledTurns.add(bestTurnContainer.t);
 
@@ -64,12 +64,11 @@ public class AI {
 			}
 		}
 
-		//If this is not easy mode, do post processing to further refine move
-		if(maxDepth != 1) {
-			bestTurn = intuitiveBestTurn(evaledTurns, results, max, bestTurn);
-		}	
-		
-		
+		// If this is not easy mode, do post processing to further refine move
+		if (maxDepth != 1) {
+			bestTurn = postProcess(evaledTurns, results, max, bestTurn);
+		}
+
 		System.out.println("Best Turn :" + bestTurn + " is  : " + max);
 		System.out.println("C is : " + c);
 		while (bestTurn.parent != null) {
@@ -88,7 +87,7 @@ public class AI {
 	// Alpha beta search method. Like minimax, but more efficient
 	int alphabeta(Turn t, GameState.Player p, int depth, int alpha, int beta,
 			TurnContainer bestTurnContainer) {
-		
+
 		if (depth == 0) {
 			bestTurnContainer.t = t;
 			return t.eval(p);
@@ -99,7 +98,6 @@ public class AI {
 			bestTurnContainer.t = t;
 			return t.eval(p);
 		}
-
 
 		int tmp = 0;
 		outer: for (Turn child : children) {
@@ -115,40 +113,131 @@ public class AI {
 		return alpha;
 	}
 
-	Turn intuitiveBestTurn(LinkedList<Turn> turnList, Vector<Integer> evals,
-			int max, Turn bestTurnBefore) {
+	Turn postProcess(LinkedList<Turn> turnList, Vector<Integer> evals, int max,
+			Turn bestTurnBefore) {
 		int fragBefore = GameState.getNumFragments(gs);
 		int i = 0;
 		Turn bestTurn = bestTurnBefore;
 		int maxFrag = Integer.MIN_VALUE;
-		int bestMoveCount = 0;
+		LinkedList<Turn> turnsThatTouchLastMove = new LinkedList<Turn>();
+		Vector<Integer> secondLevelEvals = new Vector<Integer>();
+		Iterator<Turn> iter;
 
-
-			
-		
-		// discriminate best moves based on fragmentation factor
+		// Get the set of best turns
+		i = 0;
+		LinkedList<Turn> bestTurns = new LinkedList<Turn>();
 		for (Turn t : turnList) {
-			while (t.parent != null) {
-				t = t.parent;
-			}
 			if (max == evals.get(i++)) {
-				bestMoveCount++;
-				gs.copyTo(scratchPad);
-				Turn.applyTurnsToGameState(scratchPad, t);
-				int fragAfter = GameState.getNumFragments(scratchPad);
-				if (fragAfter - fragBefore > maxFrag
-						&& fragAfter - fragBefore > 0) {
-					maxFrag = fragAfter - fragBefore;
-					bestTurn = t;
-					System.out.println("Assigning based on Frag factor: "
-							+ (fragAfter - fragBefore));
+				bestTurns.add(t);
+			}
+		}
+
+		// Of the best turns, evaluate the second level of the tree. This is
+		// player 1's gain from this turn.
+		// Aim is to minimize this.
+		if(maxDepth > 2) {
+		
+		int minVal = Integer.MAX_VALUE;
+		if (maxDepth >= 2) {
+			for (Turn t : bestTurns) {
+				while (t.parent != null && t.parent.parent != null) {
+					t = t.parent;
+				}
+				int tmp = t.eval(t.p);
+				secondLevelEvals.add(tmp);
+				if (tmp < minVal) {
+					minVal = tmp;
 				}
 			}
 		}
+
+		// Filter out the new best turns
+		iter = bestTurns.iterator();
+		i = 0;
+		while (iter.hasNext()) {
+			Turn t = iter.next();
+			int val = secondLevelEvals.get(i++);
+
+			if (val != minVal) {
+				System.out
+						.println("Filtering best moves based on 2nd level evaluation");
+
+				iter.remove();
+			}
+		}
+		}
 		
-		System.out.println("Duplicate best moves are: " + bestMoveCount);
+
+		// discriminate best moves based on fragmentation factor if this is
+		// medium mode
+		if (maxDepth == 2) {
+			secondLevelEvals.clear();
+			for (Turn t : bestTurns) {
+				while (t.parent != null) {
+					t = t.parent;
+				}
+
+				if (GameState.segmentWouldClaimUnit(gs, t.moves.get(0))) {
+					// Dont use segments that would claim a unit
+					secondLevelEvals.add(Integer.MIN_VALUE);
+					continue;
+				}
+
+				gs.copyTo(scratchPad);
+				Turn.applyTurnsToGameState(scratchPad, t);
+
+				int fragAfter = GameState.getNumFragments(scratchPad)
+						- fragBefore;
+				secondLevelEvals.add(fragAfter);
+				if (fragAfter > maxFrag && fragAfter > 0) {
+					maxFrag = fragAfter;
+				}
+			}
+
+			iter = bestTurns.iterator();
+			i = 0;
+			while (iter.hasNext()) {
+				Turn t = iter.next();
+				int val = secondLevelEvals.get(i++);
+
+				if (val != maxFrag) {
+				//	System.out
+					//		.println("Filtering best moves based on fragmentation factor");
+					iter.remove();
+				}
+			}
+		}
+
+		// This is hard mode. Prefer turns that affect the other player's strategy; moves that
+		// touch the last segment
+		else {
+			Collections.shuffle(bestTurns);
+
+			for (Turn t : bestTurns) {
+				Turn orig = t;
+				while (t.parent != null) {
+					t = t.parent;
+				}
+				if (GameState.isSegmentTouchingSegment(gs.lastMove,
+						t.moves.get(0))) {
+					if (GameState.isPerimeterSegment(t.moves.get(0))) {
+						turnsThatTouchLastMove.addFirst(orig);
+					}
+					turnsThatTouchLastMove.add(orig);
+				}
+			}
+		}
+
+		// Select one of the best remaining turns randomly
+		if (bestTurns.size() > 0) {
+			if (turnsThatTouchLastMove.size() > 0) {
+				bestTurn = turnsThatTouchLastMove.get(0);
+			} else {
+				bestTurn = bestTurns.get(0);
+			}
+		}
+
 		return bestTurn;
 	}
 
-	
 }

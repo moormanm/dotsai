@@ -260,6 +260,50 @@ public class GameState {
 		return false;
 	}
 
+	
+	
+	public static boolean segmentWouldConnect3(GameState gst, Segment s) {
+		//Do the move
+		gst.doMove2(s, Player.P1);
+	
+		Segment connSeg = new Segment(0,0,false);
+		boolean ret = false;
+		
+		
+		// If it's a Y segment, consider the left side and right sides
+		if (s.isY) {
+			if (s.x != 0) {
+				if (gst.numSegmentsAroundUnit(s.x - 1, s.y, connSeg) == 3) {
+					ret = true;
+				}
+			}
+			if (s.x != GameState.dimX - 1) {
+				if (gst.numSegmentsAroundUnit(s.x, s.y, connSeg) == 3) {
+					ret = true;
+				}
+			}
+		}
+		// If it's an X segment, check the top and bottom
+		else {
+			if (s.y != 0) {
+				if (gst.numSegmentsAroundUnit(s.x, s.y - 1, connSeg) == 3) {
+					ret = true;
+				}
+			}
+
+			if (s.y != GameState.dimY - 1) {
+				if (gst.numSegmentsAroundUnit(s.x, s.y, connSeg) == 3) {
+					ret = true;
+				}
+			}
+
+		}
+		
+		//undo the move
+		gst.undoMove2(s);
+		return ret;
+	}
+	
 	// A method that checks if a segment would claim a unit. Does not apply the
 	// move to the game state.
 	public static boolean segmentWouldClaimUnit(GameState gst, Segment s) {
@@ -362,6 +406,8 @@ public class GameState {
 
 	}
 
+	
+	
 	// Gets the fragmentation factor for a given game state
 	static int getNumFragments(GameState gs) {
 		int i = 1;
@@ -386,6 +432,48 @@ public class GameState {
 		return count;
 	}
 
+	public static boolean isPerimeterSegment(Segment a) {
+		if(a.isY) {
+			if(a.x == GameState.dimX-1 ||  
+			   a.x == 0) return true;
+			return false;
+		}
+		else {
+			if(a.y == GameState.dimY-1 || a.y == 0) return true;
+			return false;
+		}
+	}
+	
+	public static boolean isSegmentTouchingSegment(Segment a, Segment b) {
+
+		//Get the vertexes
+		Point aVertex1, aVertex2, bVertex1, bVertex2;
+		if(a.isY) {
+			aVertex1 = new Point(a.x, a.y);
+			aVertex2 = new Point(a.x, a.y+1);
+		} 
+		else {
+			aVertex1 = new Point(a.x, a.y);
+			aVertex2 = new Point(a.x + 1, a.y);
+		}
+		
+		if(b.isY) {
+			bVertex1 = new Point(b.x, b.y);
+			bVertex2 = new Point(b.x, b.y+1);
+		} 
+		else {
+			bVertex1 = new Point(b.x, b.y);
+			bVertex2 = new Point(b.x + 1, b.y);
+		}
+		
+		//If any vertex between a and b is shared, they are touching
+		return aVertex1.equals(bVertex1) || 
+		       aVertex1.equals(bVertex2) ||
+		       aVertex2.equals(bVertex1) ||
+		       aVertex2.equals(bVertex2);
+		
+	}
+	
 	// Returns the number of segments around a block unit. If it is 3,
 	// connectiveSegmentOut will be set to
 	// the fourth segment. Otherwise, value of connectiveSegmentOut is one of

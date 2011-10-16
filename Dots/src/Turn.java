@@ -1,3 +1,5 @@
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -76,7 +78,7 @@ class Turn {
 		
 		
 		//assign an overall objective value for these turns
-		int retVal = (myUnits - theirUnits)*4 + winBonus;
+		int retVal = (myUnits - theirUnits) + winBonus;
 		
 		
 		//The immediate turn should have a bearing on the overall value. 
@@ -204,11 +206,23 @@ class Turn {
 	}
 	
 	static final GameState reducePad = new GameState();
+	static final Comparator<Turn> sortBasedOnNumberOfMoves = new Comparator<Turn>() {
+		@Override
+		public int compare(Turn a, Turn b) {
+			Integer aVal = a.moves.size();
+			Integer bVal = b.moves.size();
+			return aVal.compareTo(bVal);
+		}
+		
+	};
 	static void reduceTurns(LinkedList<Turn> turnList, GameState gst) {
-		//Can't reduce a single turn
-		if(turnList.size() < 2) {
+		//Can't reduce 2 turns or less
+		if(turnList.size() < 3) {
 			return;
 		}
+		
+		//Sort the turns from least moves to greatest moves
+		Collections.sort(turnList, sortBasedOnNumberOfMoves);
 		
 		//init a temporary state
 		gst.copyTo(reducePad);
@@ -229,7 +243,6 @@ class Turn {
 		
 		HashSet<String> segSet = new HashSet<String>();
 		Iterator<Turn> i = turnList.iterator();
-		top:
 		while(i.hasNext()) {
 			Turn t = i.next();
 			
@@ -238,10 +251,15 @@ class Turn {
 				continue;
 			}
 			
+			//if this move will not claim a unit, it's a valid move
+			if(!GameState.segmentWouldConnect3(reducePad, t.moves.getLast())) {
+				continue;
+			}
+			
 			if(segSet.contains(t.moves.getLast().encode())) {
 				//remove this item. it's a duplicate
 				i.remove();
-				continue top;
+				continue;
 			}
 			reducePad.doMove2(t.moves.getLast(), GameState.Player.P1);
 			LinkedList<Segment> hits = GameState.getMandatorySegments(reducePad, true);
