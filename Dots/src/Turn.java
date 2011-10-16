@@ -1,5 +1,6 @@
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -78,7 +79,7 @@ class Turn {
 		
 		
 		//assign an overall objective value for these turns
-		int retVal = (myUnits - theirUnits) + winBonus;
+		int retVal = (myUnits - theirUnits)*2 + winBonus;
 		
 		
 		//The immediate turn should have a bearing on the overall value. 
@@ -198,31 +199,20 @@ class Turn {
 		
 		//Remove "duplicate" moves. Not really duplicates, but they produce the same result for the 
 		//other player.
+		//System.out.println("Turns before reduction: " + ret.size());
 		reduceTurns(ret, ai.gs);
-		
-		//System.out.println("Branching factor: " + ret.size());
+		//System.out.println("Turns after reduction: " + ret.size());
 		return ret;
 
 	}
 	
 	static final GameState reducePad = new GameState();
-	static final Comparator<Turn> sortBasedOnNumberOfMoves = new Comparator<Turn>() {
-		@Override
-		public int compare(Turn a, Turn b) {
-			Integer aVal = a.moves.size();
-			Integer bVal = b.moves.size();
-			return aVal.compareTo(bVal);
-		}
-		
-	};
 	static void reduceTurns(LinkedList<Turn> turnList, GameState gst) {
 		//Can't reduce 2 turns or less
 		if(turnList.size() < 3) {
 			return;
 		}
 		
-		//Sort the turns from least moves to greatest moves
-		Collections.sort(turnList, sortBasedOnNumberOfMoves);
 		
 		//init a temporary state
 		gst.copyTo(reducePad);
@@ -241,32 +231,56 @@ class Turn {
 			}
 		}
 		
-		HashSet<String> segSet = new HashSet<String>();
+		HashMap<String, String> segSet = new HashMap<String,String>();
 		Iterator<Turn> i = turnList.iterator();
+		LinkedList<String> hitList = new LinkedList<String>();
 		while(i.hasNext()) {
 			Turn t = i.next();
 			
-			//if this is a double cross move, add it regardless
+			//if this is a double cross move, keep it
 			if(t.moves.size() == prefix.size()) {
 				continue;
 			}
 			
-			//if this move will not claim a unit, it's a valid move
-			if(!GameState.segmentWouldConnect3(reducePad, t.moves.getLast())) {
+			
+			//if this move would result in no mandatory segments, keep it
+			if(GameState.segmentWouldClaimUnit(reducePad,t.moves.getLast())) {
 				continue;
 			}
 			
-			if(segSet.contains(t.moves.getLast().encode())) {
+			//Get the would be player 2 moves, should this move be made
+			reducePad.doMove2(t.moves.getLast(), GameState.Player.P1);
+			LinkedList<Segment> hits = GameState.getMandatorySegments(reducePad, true);
+			reducePad.undoMove2(t.moves.getLast());
+			hitList.clear();
+		
+			//Add each segment to the hitlist
+			for(Segment s: hits) {
+					hitList.add(s.encode());
+			}
+			//Add the parent move as well
+			hitList.add(t.moves.getLast().encode());
+		
+			//Sort the hitlist
+			Collections.sort(hitList);
+			
+			//Rebuild the segments
+			String resultingMoveSet = "";
+			for(String str : hitList) {
+				resultingMoveSet += str + ";";
+			}
+			
+			if(segSet.containsKey(resultingMoveSet)) {
+			//	System.out.println("Pruning duplicate turn with last move: " + t.moves.getLast());
+		//		System.out.println("It's equal to : " + segSet.get(resultingMoveSet));
 				//remove this item. it's a duplicate
 				i.remove();
 				continue;
 			}
-			reducePad.doMove2(t.moves.getLast(), GameState.Player.P1);
-			LinkedList<Segment> hits = GameState.getMandatorySegments(reducePad, true);
-			reducePad.undoMove2(t.moves.getLast());
-			for(Segment s: hits) {
-					segSet.add(s.encode());
+			else {
+				segSet.put(resultingMoveSet, t.moves.getLast().toString());
 			}
+
 		}
 			
 	}

@@ -43,13 +43,23 @@ public class AI {
 		LinkedList<Turn> evaledTurns = new LinkedList<Turn>();
 
 		int c = 0;
-		if (list.size() < GameState.dimX && maxDepth == 3) {
-			c = 8;
+		if (list.size() < GameState.dimX ) {
+			c = 9;
+		} else if(list.size() < GameState.dimX + GameState.dimX/2) {
+			c = 5;
 		} else if (list.size() < GameState.dimX + GameState.dimY
 				&& maxDepth == 3) {
-			c = 4;
+			c = 2;
+		}
+		else if(list.size() >  GameState.dimX * GameState.dimY) {
+			c = -1;
+		}
+		//C only applies to hard mode
+		if(maxDepth < 3) {
+			c = 0;
 		}
 
+		
 		for (Turn t : list) {
 
 			int tmp = -alphabeta(t, GameState.otherPlayer(p), maxDepth - 1 + c,
@@ -168,9 +178,8 @@ public class AI {
 		}
 		
 
+		
 		// discriminate best moves based on fragmentation factor if this is
-		// medium mode
-		if (maxDepth == 2) {
 			secondLevelEvals.clear();
 			for (Turn t : bestTurns) {
 				while (t.parent != null) {
@@ -201,40 +210,14 @@ public class AI {
 				int val = secondLevelEvals.get(i++);
 
 				if (val != maxFrag) {
-				//	System.out
-					//		.println("Filtering best moves based on fragmentation factor");
 					iter.remove();
 				}
 			}
-		}
 
-		// This is hard mode. Prefer turns that affect the other player's strategy; moves that
-		// touch the last segment
-		else {
-			Collections.shuffle(bestTurns);
-
-			for (Turn t : bestTurns) {
-				Turn orig = t;
-				while (t.parent != null) {
-					t = t.parent;
-				}
-				if (GameState.isSegmentTouchingSegment(gs.lastMove,
-						t.moves.get(0))) {
-					if (GameState.isPerimeterSegment(t.moves.get(0))) {
-						turnsThatTouchLastMove.addFirst(orig);
-					}
-					turnsThatTouchLastMove.add(orig);
-				}
-			}
-		}
 
 		// Select one of the best remaining turns randomly
 		if (bestTurns.size() > 0) {
-			if (turnsThatTouchLastMove.size() > 0) {
-				bestTurn = turnsThatTouchLastMove.get(0);
-			} else {
 				bestTurn = bestTurns.get(0);
-			}
 		}
 
 		return bestTurn;
