@@ -77,10 +77,24 @@ class Turn {
 
 		}
 		
+		//Give a sacrifice bonus if this is a sacrificial move
+		int sacrificeBonus = 0;
+		Segment connSeg = new Segment(0,0,false);
+		theLoop:
+		for (int y = 0; y < GameState.dimY - 1; y++) {
+			for (int x = 0; x < GameState.dimX - 1; x++) {
+				if (evalPad.claimedUnits[y][x] == null
+						&& evalPad.numSegmentsAroundUnit(x, y, connSeg) == 3) {
+					sacrificeBonus = 1;
+					break theLoop;
+				}
+			}
+		}
 		
 		//assign an overall objective value for these turns
-		int retVal = (myUnits - theirUnits)*2 + winBonus;
+		int retVal = (myUnits - theirUnits)*2 + winBonus + sacrificeBonus;
 		
+				
 		
 		//The immediate turn should have a bearing on the overall value. 
 		return retVal ;
@@ -208,7 +222,7 @@ class Turn {
 	
 	static final GameState reducePad = new GameState();
 	static void reduceTurns(LinkedList<Turn> turnList, GameState gst) {
-		//Can't reduce 2 turns or less
+		//Can't reduce less than 3 turns. One turn might always exist for double cross play.
 		if(turnList.size() < 3) {
 			return;
 		}
@@ -243,8 +257,8 @@ class Turn {
 			}
 			
 			
-			//if this move would result in no mandatory segments, keep it
-			if(GameState.segmentWouldClaimUnit(reducePad,t.moves.getLast())) {
+			//if this move would result in no mandatory segments for the other player, keep it
+			if(!GameState.segmentWouldConnect3(reducePad,t.moves.getLast())) {
 				continue;
 			}
 			
