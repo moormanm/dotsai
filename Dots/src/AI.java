@@ -213,6 +213,7 @@ public class AI {
 				}
 			}
 
+			
 
 		// Select one of the best remaining turns randomly
 		if (bestTurns.size() > 0) {
