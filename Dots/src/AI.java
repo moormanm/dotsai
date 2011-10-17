@@ -64,7 +64,7 @@ public class AI {
 
 			int tmp = -alphabeta(t, GameState.otherPlayer(p), maxDepth - 1 + c,
 					Integer.MIN_VALUE, Integer.MAX_VALUE, bestTurnContainer);
-		//	System.out.println("Turn : " + bestTurnContainer.t + " is " + tmp );
+		//    System.out.println("Turn : " + bestTurnContainer.t + " is " + tmp );
 			results.add(tmp);
 			evaledTurns.add(bestTurnContainer.t);
 
