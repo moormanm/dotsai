@@ -47,7 +47,8 @@ class Turn {
 
 		//Initialize a scratch pad state
 		this.ai.gs.copyTo(evalPad);
-			
+		
+
 		//Apply the turn to the scratch pad
 		applyTurnsToGameState(evalPad, this);
 		
@@ -79,20 +80,33 @@ class Turn {
 		
 		//Give a sacrifice bonus if this is a sacrificial move
 		int sacrificeBonus = 0;
-		Segment connSeg = new Segment(0,0,false);
-		theLoop:
-		for (int y = 0; y < GameState.dimY - 1; y++) {
-			for (int x = 0; x < GameState.dimX - 1; x++) {
+		//Fetch the sacrificial move status
+		boolean firstSegmentClaimsUnit = false;
+		
+		//Undo the move, check if we claim a unit, and then redo it
+		evalPad.undoMove2(moves.get(0));
+		if(GameState.segmentWouldClaimUnit(evalPad, moves.get(0))) {
+			firstSegmentClaimsUnit = true;
+		}
+		evalPad.doMove2(moves.get(0), p);
+		
+		
+		if(firstSegmentClaimsUnit) {
+		  Segment connSeg = new Segment(0,0,false);
+		  theLoop:
+		  for (int y = 0; y < GameState.dimY - 1; y++) {
+  			for (int x = 0; x < GameState.dimX - 1; x++) {
 				if (evalPad.claimedUnits[y][x] == null
 						&& evalPad.numSegmentsAroundUnit(x, y, connSeg) == 3) {
-					sacrificeBonus = 1;
+					sacrificeBonus = 3;
 					break theLoop;
 				}
 			}
+		  }
 		}
 		
 		//assign an overall objective value for these turns
-		int retVal = (myUnits - theirUnits)*2 + winBonus + sacrificeBonus;
+		int retVal = (myUnits - theirUnits) * 2 + winBonus + sacrificeBonus;
 		
 				
 		

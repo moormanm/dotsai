@@ -44,12 +44,12 @@ public class AI {
 
 		int c = 0;
 		if (list.size() < GameState.dimX ) {
-			c = 9;
+			c = 8;
 		} else if(list.size() < GameState.dimX + GameState.dimX/2) {
-			c = 5;
+			c = 4;
 		} else if (list.size() < GameState.dimX + GameState.dimY
 				&& maxDepth == 3) {
-			c = 2;
+			c = 1;
 		}
 		else if(list.size() >  GameState.dimX * GameState.dimY) {
 			c = -1;
