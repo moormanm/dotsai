@@ -49,7 +49,7 @@ public class AI {
 			c = 4;
 		} else if (list.size() < GameState.dimX + GameState.dimY
 				&& maxDepth == 3) {
-			c = 1;
+			c = 2;
 		}
 		else if(list.size() >  GameState.dimX * GameState.dimY) {
 			c = -1;
@@ -128,7 +128,7 @@ public class AI {
 		int fragBefore = GameState.getNumFragments(gs);
 		int i = 0;
 		Turn bestTurn = bestTurnBefore;
-		int maxFrag = Integer.MIN_VALUE;
+		int minFrag = Integer.MAX_VALUE;
 		Vector<Integer> secondLevelEvals = new Vector<Integer>();
 		Iterator<Turn> iter;
 
@@ -197,8 +197,8 @@ public class AI {
 				int fragAfter = GameState.getNumFragments(scratchPad)
 						- fragBefore;
 				secondLevelEvals.add(fragAfter);
-				if (fragAfter > maxFrag && fragAfter > 0) {
-					maxFrag = fragAfter;
+				if (fragAfter < minFrag ) {
+					minFrag = fragAfter;
 				}
 			}
 
@@ -208,7 +208,7 @@ public class AI {
 				iter.next();
 				int val = secondLevelEvals.get(i++);
 
-				if (val != maxFrag) {
+				if (val > minFrag) {
 					iter.remove();
 				}
 			}
