@@ -129,7 +129,6 @@ public class AI {
 		int i = 0;
 		Turn bestTurn = bestTurnBefore;
 		int maxFrag = Integer.MIN_VALUE;
-		LinkedList<Turn> turnsThatTouchLastMove = new LinkedList<Turn>();
 		Vector<Integer> secondLevelEvals = new Vector<Integer>();
 		Iterator<Turn> iter;
 
@@ -165,7 +164,7 @@ public class AI {
 		iter = bestTurns.iterator();
 		i = 0;
 		while (iter.hasNext()) {
-			Turn t = iter.next();
+			iter.next();
 			int val = secondLevelEvals.get(i++);
 
 			if (val != minVal) {
@@ -206,7 +205,7 @@ public class AI {
 			iter = bestTurns.iterator();
 			i = 0;
 			while (iter.hasNext()) {
-				Turn t = iter.next();
+				iter.next();
 				int val = secondLevelEvals.get(i++);
 
 				if (val != maxFrag) {
