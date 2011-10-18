@@ -7,8 +7,8 @@ public class GameState {
 	public Segment lastMove;
 
 	//X and Y dots dimensions
-	public static int dimX = 8;
-	public static int dimY = 8;
+	public static int dimX = 6;
+	public static int dimY = 6;
 
 	
 	//Provides a string representation of this gamestate. Useful for debugging

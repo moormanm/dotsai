@@ -51,7 +51,7 @@ public class DotsGame extends JFrame{
 
 		makeDifficultyHandler("Easy", 1, newGameMenu);
 		makeDifficultyHandler("Medium", 2, newGameMenu);
-		makeDifficultyHandler("Hard", 3, newGameMenu);
+		makeDifficultyHandler("Hard", AI.HARD, newGameMenu);
 
 		
 		menuBar.add(newGameMenu);

@@ -6,7 +6,8 @@ import java.util.Vector;
 public class AI {
 
 	// default depth
-	public static int maxDepth = 3;
+	final public static int HARD = 4;
+	public static int maxDepth = HARD;
 
 	AI(GameState gs) {
 		this.gs = gs;
@@ -46,16 +47,13 @@ public class AI {
 		if (list.size() < GameState.dimX ) {
 			c = 8;
 		} else if(list.size() < GameState.dimX + GameState.dimX/2) {
-			c = 4;
-		} else if (list.size() < GameState.dimX + GameState.dimY
-				&& maxDepth == 3) {
-			c = 2;
-		}
-		else if(list.size() >  GameState.dimX * GameState.dimY) {
-			c = -1;
+			c = 8;
+		} else if (list.size() < GameState.dimX * GameState.dimY / 2
+				&& maxDepth == HARD) {
+			c = 3;
 		}
 		//C only applies to hard mode
-		if(maxDepth < 3) {
+		if(maxDepth < HARD) {
 			c = 0;
 		}
 
