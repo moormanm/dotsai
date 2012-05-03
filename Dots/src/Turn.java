@@ -166,8 +166,21 @@ class Turn {
 				// Remove the last move
 				nt.moves.removeLast();
 				
-				ret.add(nt);
+				// Explore the basic move possibilities to generate the double cross
+				for(Segment lastMove : segs) {
 
+					// Create a new turn
+					Turn doubleCross = new Turn(ai, p, isRoot ? null : this);
+					
+
+					//Take a copy of the moves from nt
+					nt.copyMovesTo(doubleCross);
+					
+					//Add the last move
+					doubleCross.moves.add(lastMove);
+					
+					ret.add(doubleCross);
+				}
 			}
 
 			for (Segment lastMove : segs) {
@@ -187,15 +200,24 @@ class Turn {
 		}
 
 
-		// Pick up basic moves if no chain moves were found
-		if (ret.size() == 0) {
-			LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments();
-			for (Segment s : openSegs) {
-				Turn basicTurn = new Turn(ai, p, isRoot ? null : this);
-				basicTurn.moves.add(s);
-				ret.add(basicTurn);
+		//// Pick up basic moves
+		
+		// ReInit the scratch pad
+		this.ai.gs.copyTo(this.ai.scratchPad);
+
+		// Apply parent turns to get to the current state
+		applyTurnsToGameState(this.ai.scratchPad, this);
+		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments();
+		for (Segment s : openSegs) {
+			if( ai.scratchPad.segmentWouldClaimUnit(ai.scratchPad, s)) {
+				//System.out.println("Seg would claim!!");
+				continue;
 			}
+			Turn basicTurn = new Turn(ai, p, isRoot ? null : this);
+			basicTurn.moves.add(s);
+			ret.add(basicTurn);
 		}
+		
 		
 		//Remove "duplicate" moves. Not really duplicates, but they produce the same result for the 
 		//other player.
@@ -216,42 +238,21 @@ class Turn {
 		
 		//init a temporary state
 		gst.copyTo(reducePad);
-		Turn.applyTurnsToGameState(reducePad, turnList.get(0).parent);
 		
-		//Get the prefix moves
-		LinkedList<Segment> prefix = new LinkedList<Segment>();
-		if(turnList.get(0).moves.size() > 1) {
-			for(Segment s: turnList.get(0).moves ) {
-				prefix.add(s);
-			}
-			prefix.removeLast();
-			
-			for(Segment s: prefix) {
-				reducePad.doMove2(s, GameState.Player.P1);
-			}
-		}
 		
 		HashMap<String, String> segSet = new HashMap<String,String>();
 		Iterator<Turn> i = turnList.iterator();
 		LinkedList<String> hitList = new LinkedList<String>();
 		while(i.hasNext()) {
 			Turn t = i.next();
+		
 			
-			//if this is a double cross move, keep it
-			if(t.moves.size() == prefix.size()) {
-				continue;
-			}
+			//Try this move
+			reducePad.copyTo(tmpState);
+			Turn.applyTurnsToGameState(tmpState, t);
 			
-			
-			//if this move would result in no mandatory segments for the other player, keep it
-			if(!GameState.segmentWouldConnect3(reducePad,t.moves.getLast())) {
-				continue;
-			}
-			
-			//Get the would be player 2 moves, should this move be made
-			reducePad.doMove2(t.moves.getLast(), GameState.Player.P1);
-			LinkedList<Segment> hits = GameState.getMandatorySegments(reducePad, true);
-			reducePad.undoMove2(t.moves.getLast());
+			//Get the would be player 2 moves, if this move had been made. P1 Marker doesn't matter here
+			LinkedList<Segment> hits = GameState.getMandatorySegments(tmpState, false);
 			hitList.clear();
 		
 			//Add each segment to the hitlist
@@ -271,8 +272,8 @@ class Turn {
 			}
 			
 			if(segSet.containsKey(resultingMoveSet)) {
-			//	System.out.println("Pruning duplicate turn with last move: " + t.moves.getLast());
-		//		System.out.println("It's equal to : " + segSet.get(resultingMoveSet));
+			 	//System.out.println("Pruning duplicate turn with last move: " + t.moves.getLast());
+				//System.out.println("It's equal to : " + segSet.get(resultingMoveSet));
 				//remove this item. it's a duplicate
 				i.remove();
 				continue;

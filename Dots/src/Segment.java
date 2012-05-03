@@ -24,4 +24,10 @@ public String toString() {
   public String encode() {
 	  return x + "," + y + "," + (isY ? "1" : "0");
   }
+  
+  public boolean equals(Object b) {
+	  Segment bs = (Segment)b;
+	  return x == bs.x && y == bs.y && isY == bs.isY; 
+	  
+  }
 }

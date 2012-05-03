@@ -74,7 +74,7 @@ public class AI {
 
 		// If this is not easy mode, do post processing to further refine move
 		if (maxDepth != 1) {
-			bestTurn = postProcess(evaledTurns, results, max, bestTurn);
+		//	bestTurn = postProcess(evaledTurns, results, max, bestTurn);
 		}
 
 		System.out.println("Best Turn :" + bestTurn + " is  : " + max);
