@@ -4,11 +4,14 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
 
+
+
 public class AI {
 
 	// default depth
 	final public static int HARD = 4;
 	public static int maxDepth = HARD;
+        final int MAX_NODES = 800000;
 
 	AI(GameState gs) {
 		this.gs = gs;
@@ -20,11 +23,46 @@ public class AI {
 	GameState scratchPad = new GameState();
 	GameState scratchPad2 = new GameState();
 
+        int getMaxDepth() {
+        
+          
+          Turn t1 = new Turn(this, GameState.Player.P1, null);
+          int depth = 0;
+          int nodes = 0;
+          LinkedList<Turn> list = t1.possibleTurnsForPlayer(GameState.Player.P1);
+         
+          int branches = list.size();
+          System.out.println(list.size() + " at depth " + depth);
+          depth++;
+          while(true) {
+             //Caculate the nodes at this level
+             branches = list.size() * branches;
+             nodes += branches;
+
+             System.out.println(list.size() + " at depth " + depth);
+             if( nodes >= MAX_NODES ) { 
+               break;
+             }
+             
+             if(list.size() == 0) {
+            	 return Integer.MAX_VALUE;
+             }
+             //go deeper
+             list = list.get(0).possibleTurnsForPlayer(GameState.Player.P1);
+             depth++;
+          }
+          return depth;
+          
+
+        }
 	// tells the AI to take a turn on gamestate
 	void takeTurn(GameState.Player p) {
 
 		TurnContainer bestTurnContainer = new TurnContainer();
 
+		int ddepth = getMaxDepth();
+		System.out.println("Max depth is " + getMaxDepth());
+		
 		// System.out.println("fragBefore : " + fragBefore);
 		Turn t1 = new Turn(this, p, null);
 		t1.isRoot = true;
@@ -62,7 +100,7 @@ public class AI {
 		
 		for (Turn t : list) {
 
-			int tmp = -alphabeta(t, GameState.otherPlayer(p), maxDepth - 1 + c,
+			int tmp = -alphabeta(t, GameState.otherPlayer(p), Math.max(ddepth - 1,1),
 					Integer.MIN_VALUE, Integer.MAX_VALUE, bestTurnContainer);
 		//    System.out.println("Turn : " + bestTurnContainer.t + " is " + tmp );
 			results.add(tmp);
