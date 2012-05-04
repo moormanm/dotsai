@@ -1,3 +1,4 @@
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -13,6 +14,7 @@ public class AI {
 		this.gs = gs;
 	}
 
+	
 	GameState gs;
 
 	GameState scratchPad = new GameState();
@@ -84,6 +86,14 @@ public class AI {
 		}
 		for (Segment s : bestTurn.moves) {
 			gs.doMove(s, p);
+		}
+		
+		BitSet test = gs.asBitSet();
+		GameState test2 = gs.fromBitSet(test);
+		if(!test2.equals(gs)) {
+			System.out.println("LOGIC ERROR!!!!!");
+			System.out.println(gs);
+			System.out.println(test2);
 		}
 
 	}
@@ -217,6 +227,7 @@ public class AI {
 		if (bestTurns.size() > 0) {
 				bestTurn = bestTurns.get(0);
 		}
+
 
 		return bestTurn;
 	}

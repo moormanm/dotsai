@@ -1,4 +1,5 @@
 import java.awt.Point;
+import java.util.BitSet;
 import java.util.LinkedList;
 
 public class GameState {
@@ -7,8 +8,9 @@ public class GameState {
 	public Segment lastMove;
 
 	//X and Y dots dimensions
-	public static int dimX = 6;
-	public static int dimY = 6;
+
+	public static int dimX = 7;
+	public static int dimY = 7;
 
 	
 	//Provides a string representation of this gamestate. Useful for debugging
@@ -77,7 +79,69 @@ public class GameState {
 		}
 	}
 
-	
+	public BitSet asBitSet() {
+		BitSet bs = new BitSet((dimX*dimY+1)*2);
+		
+		for (int y = 0; y < dimY; y++) {
+			for (int x = 0; x < dimX - 1; x++) {
+				if(segX[y][x] != null) {
+					bs.set(y*segX.length+x, true);
+				}
+			}
+		}
+		for (int y = 0; y < dimY - 1; y++) {
+			for (int x = 0; x < dimX; x++) {
+				if(segY[y][x] != null) {
+					bs.set(dimX*dimY+1 + y*segX.length+x, true);
+				}
+			}
+		}
+		
+		return bs;
+	}
+
+	public GameState fromBitSet(BitSet bs) {
+		GameState ngs = new GameState();
+		
+		for (int y = 0; y < dimY; y++) {
+			for (int x = 0; x < dimX - 1; x++) {
+				if(bs.get(y*segX.length+x)) {
+					ngs.segX[y][x] = Player.P1;
+				}
+			}
+		}
+		for (int y = 0; y < dimY - 1; y++) {
+			for (int x = 0; x < dimX; x++) {
+				if(bs.get(dimX*dimY+1 + y*segX.length+x)) {
+					ngs.segY[y][x] = Player.P1;
+				}
+			}
+		}
+		
+		return ngs;
+	}
+	public boolean equals(Object bx) {
+		GameState  b = (GameState)bx;
+		for (int y = 0; y < segX.length; y++) {
+			for (int x = 0; x < segX[y].length; x++) {
+				boolean aset = segX[y][x] != null;
+				boolean bset = b.segX[y][x] != null;
+ 				if( aset && !bset || !aset && bset ) {
+					return false;
+				}
+			}
+		}
+		for (int y = 0; y < segY.length; y++) {
+			for (int x = 0; x < segY[y].length; x++) {
+				boolean aset = segY[y][x] != null;
+				boolean bset = b.segY[y][x] != null;
+ 				if( aset && !bset || !aset && bset ) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	public void reset() {
 
 		for (int y = 0; y < dimY; y++) {
