@@ -216,6 +216,8 @@ public class GameBoardPanel extends JLayeredPane {
     	}
     	Utilities.showInfo(str, "Game Over");
     	
+    	AI.commit();
+    	
     	lockControls(true);
 	}
 	
@@ -299,6 +301,7 @@ public class GameBoardPanel extends JLayeredPane {
 		p2Score.setText("0");
 		gameState.reset();
 		AI.maxDepth = difficulty;
+		AI.reset();
 		
 		if(boardButtonListener.lastClicked != null) {
 			boardButtonListener.lastClicked.setSelected(false);

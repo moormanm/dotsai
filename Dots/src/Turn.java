@@ -1,7 +1,10 @@
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+
 
 class Turn {
 
@@ -138,16 +141,29 @@ class Turn {
 		// Apply parent turns to get to the current state
 		applyTurnsToGameState(this.ai.scratchPad, this);
 
+	
+		ai.scratchPad.copyTo(tmpState);
+		
+		
 		// Get mandatory states
-		LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, false);
+		LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, true);
+		//LinkedList<LinkedList<Segment>> segListList = GameState.allPossibleTurns(tmpState);
 		
 		// if there were mandatory segments..
-		if(mandSegs.size() > 0) {
+		for(int i =0; i < mandSegs.size(); i++) {
+			// Init the scratch pad
+			tmpState.copyTo(this.ai.scratchPad);
+			
 			// Create a new turn
 			Turn subTurn = new Turn(this.ai, p, isRoot ? null : this);
-			subTurn.moves = mandSegs;
+			subTurn.moves.addAll(0, mandSegs.subList(0, i+1));
+
+			//Apply each move
+			for(Segment segz : subTurn.moves) {
+				ai.scratchPad.doMove2(segz, GameState.Player.P1);
+			}
 			
-			// Add a new turn for each possible "last move" of the consecutive move sequence
+			// Add a new turn for each possible move
 			LinkedList<Segment> segs = ai.scratchPad.openSegments();
 			
 			// No more moves case
@@ -155,61 +171,33 @@ class Turn {
 				ret.add(subTurn);
 			}
 			
-			//Double cross strategy case
-			if(mandSegs.size() >= 2) {
-				// Create a new turn
-				Turn nt = new Turn(ai, p, isRoot ? null : this);
-				
-				// Take a copy of the moves from subTurn
-				subTurn.copyMovesTo(nt);
-				
-				// Remove the last move
-				nt.moves.removeLast();
-				
-				// Explore the basic move possibilities to generate the double cross
-				for(Segment lastMove : segs) {
+			// Explore the basic move possibilities 
+			for(Segment lastMove : segs) {
 
-					// Create a new turn
-					Turn doubleCross = new Turn(ai, p, isRoot ? null : this);
-					
-
-					//Take a copy of the moves from nt
-					nt.copyMovesTo(doubleCross);
-					
-					//Add the last move
-					doubleCross.moves.add(lastMove);
-					
-					ret.add(doubleCross);
+				if(GameState.segmentWouldClaimUnit(ai.scratchPad, lastMove)) {
+				   continue;
 				}
-			}
-
-			for (Segment lastMove : segs) {
-				// Create a new turn
-				Turn nt = new Turn(ai, p, isRoot ? null : this);
-
-				// Take a copy of the moves from subTurn
+				
+		    	// Create a new turn
+			    Turn nt = new Turn(ai, p, isRoot ? null : this);
+					
 				subTurn.copyMovesTo(nt);
-
-				// Add the last move
+					
 				nt.moves.add(lastMove);
-
 				ret.add(nt);
 			}
-			
-			
+
 		}
 
 
 		//// Pick up basic moves
 		
 		// ReInit the scratch pad
-		this.ai.gs.copyTo(this.ai.scratchPad);
+		tmpState.copyTo(this.ai.scratchPad);
 
-		// Apply parent turns to get to the current state
-		applyTurnsToGameState(this.ai.scratchPad, this);
 		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments();
 		for (Segment s : openSegs) {
-			if( ai.scratchPad.segmentWouldClaimUnit(ai.scratchPad, s)) {
+			if( GameState.segmentWouldClaimUnit(ai.scratchPad, s)) {
 				//System.out.println("Seg would claim!!");
 				continue;
 			}
@@ -222,7 +210,7 @@ class Turn {
 		//Remove "duplicate" moves. Not really duplicates, but they produce the same result for the 
 		//other player.
 		//System.out.println("Turns before reduction: " + ret.size());
-		reduceTurns(ret, ai.gs);
+		//reduceTurns(ret, ai.gs);
 		//System.out.println("Turns after reduction: " + ret.size());
 		return ret;
 
@@ -230,19 +218,13 @@ class Turn {
 	
 	static final GameState reducePad = new GameState();
 	static void reduceTurns(LinkedList<Turn> turnList, GameState gst) {
-		//Can't reduce less than 3 turns. One turn might always exist for double cross play.
-		if(turnList.size() < 3) {
-			return;
-		}
-		
-		
 		//init a temporary state
 		gst.copyTo(reducePad);
 		
 		
 		HashMap<String, String> segSet = new HashMap<String,String>();
 		Iterator<Turn> i = turnList.iterator();
-		LinkedList<String> hitList = new LinkedList<String>();
+		HashSet<BitSet> hits = new HashSet<BitSet>();
 		while(i.hasNext()) {
 			Turn t = i.next();
 		
@@ -251,37 +233,15 @@ class Turn {
 			reducePad.copyTo(tmpState);
 			Turn.applyTurnsToGameState(tmpState, t);
 			
-			//Get the would be player 2 moves, if this move had been made. P1 Marker doesn't matter here
-			LinkedList<Segment> hits = GameState.getMandatorySegments(tmpState, false);
-			hitList.clear();
-		
-			//Add each segment to the hitlist
-			for(Segment s: hits) {
-					hitList.add(s.encode());
+			//Add this to the move set
+			BitSet bs = tmpState.asBitSet();
+			if(!hits.contains(bs)) {
+			 hits.add(bs);
 			}
-			//Add the parent move as well
-			hitList.add(t.moves.getLast().encode());
-		
-			//Sort the hitlist
-			Collections.sort(hitList);
-			
-			//Rebuild the segments
-			String resultingMoveSet = "";
-			for(String str : hitList) {
-				resultingMoveSet += str + ";";
-			}
-			
-			if(segSet.containsKey(resultingMoveSet)) {
-			 	//System.out.println("Pruning duplicate turn with last move: " + t.moves.getLast());
-				//System.out.println("It's equal to : " + segSet.get(resultingMoveSet));
-				//remove this item. it's a duplicate
+			else {
 				i.remove();
 				continue;
 			}
-			else {
-				segSet.put(resultingMoveSet, t.moves.getLast().toString());
-			}
-
 		}
 			
 	}

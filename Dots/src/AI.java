@@ -1,5 +1,11 @@
+import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
@@ -11,8 +17,47 @@ public class AI {
 	// default depth
 	final public static int HARD = 4;
 	public static int maxDepth = HARD;
-        final int MAX_NODES = 800000;
+        final int MAX_NODES = 200000;
 
+	public static HashMap<BitSet, Segment> savedStates = new HashMap<BitSet,Segment>();
+	
+	public static void reset() {
+		savedStates.clear();
+	}
+	
+	public static Connection getDBConn() throws ClassNotFoundException, SQLException {
+		Class.forName("org.sqlite.JDBC");
+		
+		//If the file doesn't already exist
+		File f = new File("memory.db");
+		if(f.exists()) {
+			Connection conn =
+			      DriverManager.getConnection("jdbc:sqlite:memory.db");
+			  return conn;
+		}
+		
+	    //Make the DB
+		Connection conn =
+		      DriverManager.getConnection("jdbc:sqlite:memory.db");
+		
+		Statement stat = conn.createStatement();
+		stat.executeUpdate("CREATE TABLE states (id INTEGER PRIMARY KEY AUTOINCREMENT, state BLOB);");
+		stat.executeUpdate("CREATE TABLE moves (stateId INTEGER PRIMARY KEY, segment text, confidence INTEGER);");
+		return conn;
+		
+	}
+	
+	
+	public static void commit() {
+		GameState tmp = new GameState();
+		for(BitSet bs : savedStates.keySet()) {
+			Segment seg = savedStates.get(bs);
+			System.out.println(tmp.fromBitSet(bs));
+			System.out.println(seg);
+			
+		}
+	}
+	
 	AI(GameState gs) {
 		this.gs = gs;
 	}
@@ -27,13 +72,12 @@ public class AI {
         
           
           Turn t1 = new Turn(this, GameState.Player.P1, null);
-          int depth = 0;
+          int depth = 1;
           int nodes = 0;
           LinkedList<Turn> list = t1.possibleTurnsForPlayer(GameState.Player.P1);
          
-          int branches = list.size();
-          System.out.println(list.size() + " at depth " + depth);
-          depth++;
+          int branches = 1;
+
           while(true) {
              //Caculate the nodes at this level
              branches = list.size() * branches;
@@ -58,6 +102,16 @@ public class AI {
 	// tells the AI to take a turn on gamestate
 	void takeTurn(GameState.Player p) {
 
+		try {
+			Connection conn = getDBConn();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		TurnContainer bestTurnContainer = new TurnContainer();
 
 		int ddepth = getMaxDepth();
@@ -113,9 +167,8 @@ public class AI {
 		}
 
 		// If this is not easy mode, do post processing to further refine move
-		if (maxDepth != 1) {
-		//	bestTurn = postProcess(evaledTurns, results, max, bestTurn);
-		}
+		//bestTurn = postProcess(evaledTurns, results, max, bestTurn);
+		
 
 		System.out.println("Best Turn :" + bestTurn + " is  : " + max);
 		System.out.println("C is : " + c);
@@ -126,12 +179,16 @@ public class AI {
 			gs.doMove(s, p);
 		}
 		
-		BitSet test = gs.asBitSet();
-		GameState test2 = gs.fromBitSet(test);
-		if(!test2.equals(gs)) {
-			System.out.println("LOGIC ERROR!!!!!");
-			System.out.println(gs);
-			System.out.println(test2);
+		//Save the gamestate and turn info
+		if(bestTurn.moves.size() == 1) {
+		  BitSet savedState = gs.asBitSet();
+		  GameState test2 = gs.fromBitSet(savedState);
+		  if(!test2.equals(gs)) {
+  			System.err.println("LOGIC ERROR!!!!!");
+			System.err.println(gs);
+			System.err.println(test2);
+		  }
+  	      savedStates.put(savedState, bestTurn.moves.get(0));
 		}
 
 	}

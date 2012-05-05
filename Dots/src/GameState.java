@@ -652,5 +652,59 @@ public class GameState {
 		return ret;
 
 	}
+	
+	//This function gets all chain moves that are available at a given gamestate
+	public static LinkedList<LinkedList<Segment>> allPossibleTurns(GameState gst) {
+		LinkedList<LinkedList<Segment>> ret = new LinkedList<LinkedList<Segment>>();
+		LinkedList<LinkedList<Segment>> q = new LinkedList<LinkedList<Segment>>();
+
+		GameState tmpState = new GameState();
+		
+		// Add the root segments to the work queue
+		for(Segment s : gst.openSegments()) {
+			LinkedList<Segment> segList = new LinkedList<Segment>();
+			segList.add(s);
+			q.add(segList);
+		}
+
+		while (q.size() > 0) {
+			// pull an item off the front of q
+			LinkedList<Segment> segList = q.poll();
+			
+			//Copy and implement the gamestate
+			gst.copyTo(tmpState);
+			for(Segment s : segList ) {
+				tmpState.doMove2(s, GameState.Player.P1);
+			}
+			
+			LinkedList<Segment> openSegs = tmpState.openSegments();
+			//If this is the end game move..
+			if(openSegs.size() == 0) {
+				ret.add(segList);
+			}
+			
+			// Add the open segments to the work queue
+			for(Segment s : tmpState.openSegments()) {
+				//If this would claim a unit..
+				if(GameState.segmentWouldClaimUnit(tmpState, s)) {
+					//Add to the seg list, put onn the q
+					LinkedList<Segment> newSegList = new LinkedList<Segment>(segList);
+					newSegList.add(s);
+					q.add(newSegList);
+				}
+				else {
+					//Make a new seg list, add this segment to it
+					LinkedList<Segment> newSegList = new LinkedList<Segment>(segList);
+					newSegList.add(s);
+					ret.add(newSegList);
+				}
+				
+			}
+
+		}
+
+		return ret;
+
+	}
 
 }
