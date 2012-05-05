@@ -146,72 +146,21 @@ class Turn {
 		
 		
 		// Get mandatory states
-		LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, true);
-		//LinkedList<LinkedList<Segment>> segListList = GameState.allPossibleTurns(tmpState);
-		
-		// if there were mandatory segments..
-		for(int i =0; i < mandSegs.size(); i++) {
-			// Init the scratch pad
-			tmpState.copyTo(this.ai.scratchPad);
-			
-			// Create a new turn
-			Turn subTurn = new Turn(this.ai, p, isRoot ? null : this);
-			subTurn.moves.addAll(0, mandSegs.subList(0, i+1));
+		//LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, true);
+		LinkedList<LinkedList<Segment>> segListList = GameState.allPossibleTurns(tmpState);
 
-			//Apply each move
-			for(Segment segz : subTurn.moves) {
-				ai.scratchPad.doMove2(segz, GameState.Player.P1);
-			}
-			
-			// Add a new turn for each possible move
-			LinkedList<Segment> segs = ai.scratchPad.openSegments();
-			
-			// No more moves case
-			if (segs.size() == 0) {
-				ret.add(subTurn);
-			}
-			
-			// Explore the basic move possibilities 
-			for(Segment lastMove : segs) {
-
-				if(GameState.segmentWouldClaimUnit(ai.scratchPad, lastMove)) {
-				   continue;
-				}
-				
-		    	// Create a new turn
-			    Turn nt = new Turn(ai, p, isRoot ? null : this);
-					
-				subTurn.copyMovesTo(nt);
-					
-				nt.moves.add(lastMove);
-				ret.add(nt);
-			}
-
+		//Make a turn out of each item in list
+		for(LinkedList<Segment> segList : segListList ) {
+			Turn t = new Turn(ai, p , isRoot ? null : this);
+			t.moves = segList;
+			ret.add(t);
 		}
-
-
-		//// Pick up basic moves
-		
-		// ReInit the scratch pad
-		tmpState.copyTo(this.ai.scratchPad);
-
-		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments();
-		for (Segment s : openSegs) {
-			if( GameState.segmentWouldClaimUnit(ai.scratchPad, s)) {
-				//System.out.println("Seg would claim!!");
-				continue;
-			}
-			Turn basicTurn = new Turn(ai, p, isRoot ? null : this);
-			basicTurn.moves.add(s);
-			ret.add(basicTurn);
-		}
-		
 		
 		//Remove "duplicate" moves. Not really duplicates, but they produce the same result for the 
 		//other player.
-		//System.out.println("Turns before reduction: " + ret.size());
-		//reduceTurns(ret, ai.gs);
-		//System.out.println("Turns after reduction: " + ret.size());
+		System.out.println("Turns before reduction: " + ret.size());
+		reduceTurns(ret, ai.gs);
+		System.out.println("Turns after reduction: " + ret.size());
 		return ret;
 
 	}
@@ -222,7 +171,6 @@ class Turn {
 		gst.copyTo(reducePad);
 		
 		
-		HashMap<String, String> segSet = new HashMap<String,String>();
 		Iterator<Turn> i = turnList.iterator();
 		HashSet<BitSet> hits = new HashSet<BitSet>();
 		while(i.hasNext()) {
@@ -240,7 +188,6 @@ class Turn {
 			}
 			else {
 				i.remove();
-				continue;
 			}
 		}
 			
