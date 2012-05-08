@@ -23,7 +23,7 @@ public class AI {
 	// default depth
 	final public static int HARD = 4;
 	public static int maxDepth = HARD;
-    final int MAX_NODES = 1000000;
+    final int MAX_NODES = 50000;
 
     static Connection conn;
     static { 
@@ -61,7 +61,7 @@ public class AI {
     
 
     public static boolean timeIsUp() {
-    	if(theEstimatedCurrentTime > startTime + 40000) {
+    	if(theEstimatedCurrentTime > startTime + 6000) {
     		System.out.println("TIME IS UP!!!!");
     		return true;
     	}
