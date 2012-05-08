@@ -358,7 +358,7 @@ public class AI {
 		int i = 0;
 		for(Turn t : results.keySet()){
 			if(results.get(t) == max) {
-				System.out.println("Candidate turn : " + t);
+				System.out.println("Candidate turn : " + t + " is " + max);
 			}
 		}
 		
