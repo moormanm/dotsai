@@ -206,17 +206,20 @@ public class GameBoardPanel extends JLayeredPane {
     	int p2 = gameState.getClaimedArea(GameState.Player.P2);
     	String str = "";
     	if(p1 > p2) {
-    	  str = "Red wins!";	
+    	  str = "Red wins!";
+    	  AI.commit(GameState.Player.P1);
     	}
     	else if (p1 == p2) {
+    	  AI.commit(null);
     	  str = "Draw!";
     	}
     	else {
     	  str = "Blue wins!";
+    	  AI.commit(GameState.Player.P2);
     	}
     	Utilities.showInfo(str, "Game Over");
     	
-    	AI.commit();
+    	
     	
     	lockControls(true);
 	}

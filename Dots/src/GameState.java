@@ -659,12 +659,18 @@ public class GameState {
 		LinkedList<LinkedList<Segment>> q = new LinkedList<LinkedList<Segment>>();
 
 		GameState tmpState = new GameState();
-		
+		gst.copyTo(tmpState);
 		// Add the root segments to the work queue
 		for(Segment s : gst.openSegments()) {
 			LinkedList<Segment> segList = new LinkedList<Segment>();
 			segList.add(s);
-			q.add(segList);
+			
+			if(GameState.segmentWouldClaimUnit(tmpState, s)) {
+				q.add(segList);
+			}
+			else {
+				ret.add(segList);
+			}
 		}
 
 		while (q.size() > 0) {

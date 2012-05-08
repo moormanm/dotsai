@@ -14,6 +14,8 @@ class Turn {
 	@Override
 	public String toString() {
 		String ret = new String();
+		
+				
 		LinkedList<Turn> parents = new LinkedList<Turn>();
 		Turn par = parent;
 		int tcount = 1;
@@ -49,9 +51,10 @@ class Turn {
 		//Initialize a scratch pad state
 		this.ai.gs.copyTo(evalPad);
 		
-
 		//Apply the turn to the scratch pad
 		applyTurnsToGameState(evalPad, this);
+
+		
 		
 
 		//System.out.println(evalPad);
@@ -68,25 +71,25 @@ class Turn {
 		int winBonus = 0;
 		
 		//if there are no segments left, or the difference is greater than the remaining units 
-		if (evalPad.hasOpenSegments() == false) { 
-			if (diff > 0) {
-				winBonus = Integer.MAX_VALUE / 2;
-			} else if (diff == 0) {
+		if (evalPad.hasOpenSegments() == false) {
+			if ( myUnitsAfter > theirUnitsAfter ) {
 				winBonus = Integer.MAX_VALUE / 4;
-			} else {
-				winBonus = -1 * Integer.MAX_VALUE / 2;
 			}
-
+			else if(  myUnitsAfter == theirUnitsAfter ) {
+				winBonus = Integer.MAX_VALUE / 8;
+			}
+			else {
+				winBonus = -1 * Integer.MAX_VALUE / 4;
+			}
 		}
 		
 
 		//assign an overall objective value for these turns
 		int retVal = (myUnits - theirUnits) + winBonus;
-		
 				
 		
 		//The immediate turn should have a bearing on the overall value. 
-		return retVal ;
+		return retVal;
 
 	}
 
@@ -146,21 +149,73 @@ class Turn {
 		
 		
 		// Get mandatory states
-		//LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, true);
-		LinkedList<LinkedList<Segment>> segListList = GameState.allPossibleTurns(tmpState);
+		LinkedList<Segment> mandSegs = GameState.getMandatorySegments(ai.scratchPad, true);
+		
+		
+		// if there were mandatory segments..
+		for(int i =1; i <= mandSegs.size(); i++) {
+			// Init the scratch pad
+			tmpState.copyTo(this.ai.scratchPad);
+			
+	
+			// Create a new turn
+			Turn subTurn = new Turn(this.ai, p, isRoot ? null : this);
+			subTurn.moves.addAll(0, mandSegs.subList(0, i));
+			
+			//Apply each move
+			for(Segment segz : subTurn.moves) {
+				ai.scratchPad.doMove2(segz, p);
+			}
+			
+			// Add a new turn for each possible move
+			LinkedList<Segment> segs = ai.scratchPad.openSegments();
+			
+			// No more moves case
+			if (segs.size() == 0) {
+				ret.add(subTurn);
+			}
+			
+			// Explore the basic move possibilities 
+			for(Segment lastMove : segs) {
 
-		//Make a turn out of each item in list
-		for(LinkedList<Segment> segList : segListList ) {
-			Turn t = new Turn(ai, p , isRoot ? null : this);
-			t.moves = segList;
-			ret.add(t);
+				if(GameState.segmentWouldClaimUnit(ai.scratchPad, lastMove)) {
+				   continue;
+				}
+				
+		    	// Create a new turn
+			    Turn nt = new Turn(ai, p, isRoot ? null : this);
+					
+				subTurn.copyMovesTo(nt);
+					
+				nt.moves.add(lastMove);
+				ret.add(nt);
+			}
+
 		}
+
+
+		//// Pick up basic moves
+		
+		// ReInit the scratch pad
+		tmpState.copyTo(this.ai.scratchPad);
+
+		LinkedList<Segment> openSegs = this.ai.scratchPad.openSegments();
+		for (Segment s : openSegs) {
+			if( GameState.segmentWouldClaimUnit(ai.scratchPad, s)) {
+				//System.out.println("Seg would claim!!");
+				continue;
+			}
+			Turn basicTurn = new Turn(ai, p, isRoot ? null : this);
+			basicTurn.moves.add(s);
+			ret.add(basicTurn);
+		}
+		
 		
 		//Remove "duplicate" moves. Not really duplicates, but they produce the same result for the 
 		//other player.
-		System.out.println("Turns before reduction: " + ret.size());
-		reduceTurns(ret, ai.gs);
-		System.out.println("Turns after reduction: " + ret.size());
+		//System.out.println("Turns before reduction: " + ret.size());
+		//reduceTurns(ret, ai.gs);
+		//System.out.println("Turns after reduction: " + ret.size());
 		return ret;
 
 	}
@@ -171,15 +226,33 @@ class Turn {
 		gst.copyTo(reducePad);
 		
 		
+		HashMap<String, String> segSet = new HashMap<String,String>();
 		Iterator<Turn> i = turnList.iterator();
 		HashSet<BitSet> hits = new HashSet<BitSet>();
 		while(i.hasNext()) {
 			Turn t = i.next();
 		
-			
 			//Try this move
 			reducePad.copyTo(tmpState);
-			Turn.applyTurnsToGameState(tmpState, t);
+			if(t.moves.size() > 1) {
+			  LinkedList<Segment> tmpMoves = new LinkedList<Segment>(t.moves);
+			  LinkedList<Segment> sv = t.moves;
+			  tmpMoves.removeLast();
+			  t.moves = tmpMoves;
+			  Turn.applyTurnsToGameState(tmpState, t);
+			  t.moves = sv;
+			}
+			else {
+				Turn.applyTurnsToGameState(tmpState, t);
+			}
+			
+
+			//Get the mandatory segments for the other player
+			LinkedList<Segment> msegs = GameState.getMandatorySegments(tmpState, false);
+			if(msegs.size() == 0) {
+				continue;
+			}
+			
 			
 			//Add this to the move set
 			BitSet bs = tmpState.asBitSet();
@@ -188,16 +261,10 @@ class Turn {
 			}
 			else {
 				i.remove();
+				continue;
 			}
 		}
 			
 	}
-		
-		
-		
-		
-		
-
-
 
 }
