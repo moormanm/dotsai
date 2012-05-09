@@ -7,8 +7,6 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Rectangle2D;
-
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
@@ -303,6 +301,7 @@ public class GameBoardPanel extends JLayeredPane {
 		p1Score.setText("0");
 		p2Score.setText("0");
 		gameState.reset();
+		System.out.println("setting difficulty to " + difficulty);
 		AI.maxDepth = difficulty;
 		AI.reset();
 		

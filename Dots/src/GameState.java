@@ -253,6 +253,56 @@ public class GameState {
 		return;
 	}
 
+	//Applies a move to a state, incrementing claimed units
+	public void undoMove(Segment s, Player p) {
+
+		Player seg[][];
+		if (s.isY) {
+			seg = segY;
+		} else {
+			seg = segX;
+		}
+
+		assert (seg[s.y][s.x] == p);
+
+		
+
+		// If it's a Y segment, check the left and right areas for enclosure
+		if (s.isY) {
+			if (s.x != 0) {
+				if (isUnitEnclosed(s.x - 1, s.y)) {
+					claimedUnits[s.y][s.x - 1] = null;
+				}
+			}
+			if (s.x != dimX - 1) {
+				if (isUnitEnclosed(s.x, s.y)) {
+					claimedUnits[s.y][s.x] = null;
+				}
+			}
+		}
+		// If it's an X segment, check the top and bottom
+		else {
+			if (s.y != 0) {
+				if (isUnitEnclosed(s.x, s.y - 1)) {
+					claimedUnits[s.y - 1][s.x] = null;
+				}
+			}
+
+			if (s.y != dimY - 1) {
+				if (isUnitEnclosed(s.x, s.y)) {
+					claimedUnits[s.y][s.x] = null;
+				}
+			}
+
+		}
+		// undo the segment
+		seg[s.y][s.x] = null;
+		
+		lastMove = null;
+		return;
+	}
+
+	
 	//Gets the non-p player
 	public static GameState.Player otherPlayer(GameState.Player p) {
 		if (p == GameState.Player.P1)
@@ -578,8 +628,7 @@ public class GameState {
 
 	
 	//This function gets all chain moves that are available at a given gamestate
-	public static LinkedList<Segment> getMandatorySegments(GameState gst,
-			boolean undo) {
+	public static LinkedList<Segment> getMandatorySegments(GameState gst) {
 		LinkedList<Segment> ret = new LinkedList<Segment>();
 
 		Segment connSeg = new Segment(0, 0, false);
@@ -643,74 +692,15 @@ public class GameState {
 		}
 
 		// undo moves
-		if (undo) {
-			for (Segment m : ret) {
-				gst.undoMove2(m);
-			}
+		for (Segment m : ret) {
+			gst.undoMove2(m);
 		}
+		
 
 		return ret;
 
 	}
 	
-	//This function gets all chain moves that are available at a given gamestate
-	public static LinkedList<LinkedList<Segment>> allPossibleTurns(GameState gst) {
-		LinkedList<LinkedList<Segment>> ret = new LinkedList<LinkedList<Segment>>();
-		LinkedList<LinkedList<Segment>> q = new LinkedList<LinkedList<Segment>>();
-
-		GameState tmpState = new GameState();
-		gst.copyTo(tmpState);
-		// Add the root segments to the work queue
-		for(Segment s : gst.openSegments()) {
-			LinkedList<Segment> segList = new LinkedList<Segment>();
-			segList.add(s);
-			
-			if(GameState.segmentWouldClaimUnit(tmpState, s)) {
-				q.add(segList);
-			}
-			else {
-				ret.add(segList);
-			}
-		}
-
-		while (q.size() > 0) {
-			// pull an item off the front of q
-			LinkedList<Segment> segList = q.poll();
-			
-			//Copy and implement the gamestate
-			gst.copyTo(tmpState);
-			for(Segment s : segList ) {
-				tmpState.doMove2(s, GameState.Player.P1);
-			}
-			
-			LinkedList<Segment> openSegs = tmpState.openSegments();
-			//If this is the end game move..
-			if(openSegs.size() == 0) {
-				ret.add(segList);
-			}
-			
-			// Add the open segments to the work queue
-			for(Segment s : tmpState.openSegments()) {
-				//If this would claim a unit..
-				if(GameState.segmentWouldClaimUnit(tmpState, s)) {
-					//Add to the seg list, put onn the q
-					LinkedList<Segment> newSegList = new LinkedList<Segment>(segList);
-					newSegList.add(s);
-					q.add(newSegList);
-				}
-				else {
-					//Make a new seg list, add this segment to it
-					LinkedList<Segment> newSegList = new LinkedList<Segment>(segList);
-					newSegList.add(s);
-					ret.add(newSegList);
-				}
-				
-			}
-
-		}
-
-		return ret;
-
-	}
+	
 
 }
